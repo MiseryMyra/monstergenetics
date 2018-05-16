@@ -421,6 +421,12 @@ def display_description():
         description = describe.generate_description(name, cfg.population[name], total_monster_stats(name))
         msgbox(description)
         
+def display_controls():
+    controls = 'CONTROLS\n\n'
+    controls = controls + 'Numpad or arrow keys: Move the player and attack\nNumpad 5 or space bar: Wait a turn in turn-based mode\nNumpad 0 or R: Toggle turn-based mode\nS: Display the monster statistics window\nD: Display the monster descriptions window\nESC or Q: Quit to main menu\nMouse: Click on menu options, hover over monsters to see stats\n/ or ?: Display controls'
+    controls = controls + '\n\nPress any key to close this window.'
+    msgbox(controls,70)
+        
 def display_main_menu(img):
     #show the background image, at twice the regular console resolution
     libtcod.image_blit_2x(img, 0, 0, 0)
@@ -430,4 +436,4 @@ def display_main_menu(img):
     libtcod.console_print_ex(0, cfg.SCREEN_WIDTH/2, cfg.SCREEN_HEIGHT/2-4, libtcod.BKGND_NONE, libtcod.CENTER,
                              'M O N S T E R   G E N E T I C S')
     libtcod.console_print_ex(0, cfg.SCREEN_WIDTH/2, cfg.SCREEN_HEIGHT-4, libtcod.BKGND_NONE, libtcod.CENTER, 'By MiseryMyra')
-    libtcod.console_print_ex(0, cfg.SCREEN_WIDTH/2, cfg.SCREEN_HEIGHT-2, libtcod.BKGND_NONE, libtcod.CENTER, 'Version 0.1.3')
+    libtcod.console_print_ex(0, cfg.SCREEN_WIDTH/2, cfg.SCREEN_HEIGHT-2, libtcod.BKGND_NONE, libtcod.CENTER, 'Version ' + cfg.VERSION_NUMBER)
