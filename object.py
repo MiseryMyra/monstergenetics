@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 import math
 import random
 import cfg
-#import monst
+import monst
 import gui
 
 #module for object classes and related functions
@@ -235,21 +235,21 @@ class Object:
  
 class Fighter:
     #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, hp, defense, power, dex, speed, perception, luck, death_function=None):
-        self.base_max_hp = hp
-        self.hp = hp
-        self.base_defense = defense
-        self.base_power = power
-        self.base_dex = dex
-        self.base_speed = speed
-        self.timer = cfg.MAX_TIMER
-        self.base_perception = perception
-        self.base_luck = luck
-        self.xp = calculate_xp(hp, defense, power, dex, speed, perception, luck)
+    def __init__(self, properties, death_function=None):
+        self.base_max_hp = properties.hp
+        self.hp = properties.hp
+        self.base_defense = properties.df
+        self.base_power = properties.pw
+        self.base_dex = properties.dx
+        self.base_speed = properties.sp
+        self.timer = libtcod.random_get_int(0, 0, cfg.MAX_TIMER) #initially desynced timers
+        self.base_perception = properties.pr
+        self.base_luck = properties.lk
+        self.xp = calculate_xp(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.death_function = death_function
-        self.max_cooldown = calculate_cooldown(hp, defense, power, dex, speed, perception, luck)
+        self.max_cooldown = calculate_cooldown(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.cooldown = self.max_cooldown
-        self.max_nutrition = calculate_nutrition(hp, defense, power, dex, speed, perception, luck)
+        self.max_nutrition = calculate_nutrition(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.nutrition = self.max_nutrition/2
         self.starving = False
  
@@ -417,13 +417,10 @@ class Fighter:
             #set new color
             color = color_mutate(monster.color, mate.owner.color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
             
+            properties = monst.Monster(monster.char, color, hp, power, defense, dex, speed, perception, luck)
+            
             #always created with maxed out stats
-            fighter_component = Fighter(hp, defense, power, dex, speed, perception, luck, death_function=monster_death)
-            ai_component = BasicMonster()
-
-            new_monster = Object(x, y, monster.char, monster.name, color, blocks=True, fighter=fighter_component, ai=ai_component)
-                             
-            cfg.objects.append(new_monster)
+            make_monster(x, y, monster.name, properties)
             
             #update population
             update_population(monster.name)
@@ -431,7 +428,7 @@ class Fighter:
             gui.message(self.owner.name.capitalize() + ' reproduced!', libtcod.light_green)
             
         else:
-            gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.desaturated_green)
+            gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.5)
  
 class BasicMonster:
     #AI for a basic monster.
@@ -623,9 +620,9 @@ def get_all_equipped(obj):  #returns a list of equipped items
 def calculate_xp(max_hp, defense, power, dex, speed, perception, luck):
     #return xp of a monster for given stats
     solo = max_hp + defense**2 + power**2 + int(10*math.log(speed + 1, 2)) + perception**2/5 + luck**2/7
-    synergy = (dex + int(10*math.log(speed + 1, 2)))*(defense + power) / 3 + defense*power*speed*dex/10
+    synergy = [(dex + int(10*math.log(speed + 1, 2)))*(defense + power) / 3, defense*power*speed*dex/10]
     
-    return solo + synergy
+    return solo + sum(synergy)
     
 def calculate_cooldown(max_hp, defense, power, dex, speed, perception, luck):
     #return max cooldown of a monster for given stats, no smaller than the minimum
@@ -773,6 +770,48 @@ def cast_confuse():
     monster.ai.owner = monster  #tell the new component who owns it
     gui.message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
  
+def player_move_or_attack(dx, dy):
+    #the coordinates the player is moving to/attacking
+    x = cfg.player.x + dx
+    y = cfg.player.y + dy
+ 
+    #try to find an attackable object there
+    target = None
+    for obj in cfg.objects:
+        if obj.fighter and obj.x == x and obj.y == y:
+            target = obj
+            break
+ 
+    #attack if target found, move otherwise
+    if target is not None:
+        cfg.player.fighter.attack(target)
+    else:
+        cfg.player.move(dx, dy)
+        cfg.fov_recompute = True
+        
+def check_level_up():
+    #see if the player's experience is enough to level-up
+    level_up_xp = cfg.LEVEL_UP_BASE + cfg.player.level * cfg.LEVEL_UP_FACTOR
+    if cfg.player.fighter.xp >= level_up_xp:
+        #it is! level up and ask to raise some stats
+        cfg.player.level += 1
+        cfg.player.fighter.xp -= level_up_xp
+        gui.message('Your battle skills grow stronger! You reached level ' + str(cfg.player.level) + '!', libtcod.yellow)
+ 
+        choice = None
+        while choice == None:  #keep asking until a choice is made
+            choice = gui.menu('Level up! Choose a stat to raise:\n',
+                          ['Constitution (+20 HP, from ' + str(cfg.player.fighter.max_hp) + ')',
+                           'Strength (+1 attack, from ' + str(cfg.player.fighter.power) + ')',
+                           'Agility (+1 defense, from ' + str(cfg.player.fighter.defense) + ')'], cfg.LEVEL_cfg.SCREEN_WIDTH)
+ 
+        if choice == 0:
+            cfg.player.fighter.base_max_hp += 20
+            cfg.player.fighter.hp += 20
+        elif choice == 1:
+            cfg.player.fighter.base_power += 1
+        elif choice == 2:
+            cfg.player.fighter.base_defense += 1
     
 def player_death(player):
     #the game ended!
@@ -859,3 +898,17 @@ def update_population(name=None):
     else:
         for key in cfg.population:
             cfg.population[key] = object_count(key)
+            
+def make_monster(x, y, name, properties):
+    #makes a fighter at a given position with a given name
+    character = properties.char
+    color = properties.color
+    
+    if name == 'player':
+        fighter_component = Fighter(properties, death_function=player_death)
+        cfg.player = Object(x, y, character, name, color, blocks=True, fighter=fighter_component)
+    else:
+        fighter_component = Fighter(properties, death_function=monster_death)
+        ai_component = BasicMonster()
+        monster = Object(x, y, character, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
+        cfg.objects.append(monster)
