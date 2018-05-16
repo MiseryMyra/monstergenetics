@@ -3,28 +3,10 @@ import shelve
 import cfg
 import object
 import mapgen
+import monst
 import gui
 
 #module used for main gameplay functions
- 
-def player_move_or_attack(dx, dy):
-    #the coordinates the player is moving to/attacking
-    x = cfg.player.x + dx
-    y = cfg.player.y + dy
- 
-    #try to find an attackable object there
-    target = None
-    for obj in cfg.objects:
-        if obj.fighter and obj.x == x and obj.y == y:
-            target = obj
-            break
- 
-    #attack if target found, move otherwise
-    if target is not None:
-        cfg.player.fighter.attack(target)
-    else:
-        cfg.player.move(dx, dy)
-        cfg.fov_recompute = True
  
 def handle_keys():
     if cfg.key.vk == libtcod.KEY_ENTER and cfg.key.lalt:
@@ -37,21 +19,21 @@ def handle_keys():
     if cfg.game_state == 'playing':
         #movement keys
         if cfg.key.vk == libtcod.KEY_UP or cfg.key.vk == libtcod.KEY_KP8:
-            player_move_or_attack(0, -1)
+            object.player_move_or_attack(0, -1)
         elif cfg.key.vk == libtcod.KEY_DOWN or cfg.key.vk == libtcod.KEY_KP2:
-            player_move_or_attack(0, 1)
+            object.player_move_or_attack(0, 1)
         elif cfg.key.vk == libtcod.KEY_LEFT or cfg.key.vk == libtcod.KEY_KP4:
-            player_move_or_attack(-1, 0)
+            object.player_move_or_attack(-1, 0)
         elif cfg.key.vk == libtcod.KEY_RIGHT or cfg.key.vk == libtcod.KEY_KP6:
-            player_move_or_attack(1, 0)
+            object.player_move_or_attack(1, 0)
         elif cfg.key.vk == libtcod.KEY_HOME or cfg.key.vk == libtcod.KEY_KP7:
-            player_move_or_attack(-1, -1)
+            object.player_move_or_attack(-1, -1)
         elif cfg.key.vk == libtcod.KEY_PAGEUP or cfg.key.vk == libtcod.KEY_KP9:
-            player_move_or_attack(1, -1)
+            object.player_move_or_attack(1, -1)
         elif cfg.key.vk == libtcod.KEY_END or cfg.key.vk == libtcod.KEY_KP1:
-            player_move_or_attack(-1, 1)
+            object.player_move_or_attack(-1, 1)
         elif cfg.key.vk == libtcod.KEY_PAGEDOWN or cfg.key.vk == libtcod.KEY_KP3:
-            player_move_or_attack(1, 1)
+            object.player_move_or_attack(1, 1)
         elif cfg.key.vk == libtcod.KEY_KP5 or cfg.key.vk == libtcod.KEY_SPACE:
             pass  #do nothing ie wait for the monster to come to you
         elif cfg.key.vk == libtcod.KEY_INSERT or cfg.key.vk == libtcod.KEY_KP0:
@@ -95,6 +77,10 @@ def handle_keys():
             if key_char == 'd':
                 #show monster descriptions
                 gui.display_description()
+                
+            if key_char == '/' or key_char == '?':
+                #show monster descriptions
+                gui.display_controls()
             
             if key_char == 'r':
                 #toggle real time mode
@@ -114,30 +100,6 @@ def handle_keys():
                 
             else:
                 return 'didnt-take-turn'
- 
-def check_level_up():
-    #see if the player's experience is enough to level-up
-    level_up_xp = cfg.LEVEL_UP_BASE + cfg.player.level * cfg.LEVEL_UP_FACTOR
-    if cfg.player.fighter.xp >= level_up_xp:
-        #it is! level up and ask to raise some stats
-        cfg.player.level += 1
-        cfg.player.fighter.xp -= level_up_xp
-        gui.message('Your battle skills grow stronger! You reached level ' + str(cfg.player.level) + '!', libtcod.yellow)
- 
-        choice = None
-        while choice == None:  #keep asking until a choice is made
-            choice = gui.menu('Level up! Choose a stat to raise:\n',
-                          ['Constitution (+20 HP, from ' + str(cfg.player.fighter.max_hp) + ')',
-                           'Strength (+1 attack, from ' + str(cfg.player.fighter.power) + ')',
-                           'Agility (+1 defense, from ' + str(cfg.player.fighter.defense) + ')'], cfg.LEVEL_cfg.SCREEN_WIDTH)
- 
-        if choice == 0:
-            cfg.player.fighter.base_max_hp += 20
-            cfg.player.fighter.hp += 20
-        elif choice == 1:
-            cfg.player.fighter.base_power += 1
-        elif choice == 2:
-            cfg.player.fighter.base_defense += 1
  
 def save_game():
     #open a new empty shelve (possibly overwriting an old one) to write the game data
@@ -175,8 +137,7 @@ def load_game():
  
 def new_game():
     #create object representing the player
-    fighter_component = object.Fighter(hp=100, defense=100, power=100, dex=20, speed=100, perception=cfg.TORCH_RADIUS, luck=100, death_function=object.player_death)
-    cfg.player = object.Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
+    object.make_monster(0, 0, 'player', monst.properties['player'])
  
     cfg.player.level = 1
  
@@ -219,7 +180,7 @@ def play_game():
         libtcod.console_flush()
  
         #level up if needed
-        check_level_up()
+        object.check_level_up()
  
         #erase all objects at their old locations, before they move
         for obj in cfg.objects:
@@ -251,17 +212,19 @@ def main_menu():
         gui.display_main_menu(img)
  
         #show options and wait for the player's choice
-        choice = gui.menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
+        choice = gui.menu('', ['Play a new game', 'Continue last game', 'Display controls', 'Quit'], 24)
  
         if choice == 0:  #new game
             new_game()
             play_game()
-        if choice == 1:  #load last game
+        elif choice == 1:  #load last game
             try:
                 load_game()
             except:
                 gui.msgbox('\n No saved game to load.\n', 24)
                 continue
             play_game()
-        elif choice == 2:  #quit
+        elif choice == 2: #controls, will eventually be options menu
+            gui.display_controls()
+        elif choice == 3:  #quit
             break
