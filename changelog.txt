@@ -1,9 +1,10 @@
 Monster Genetics Changelog
 
-Version 0.1.3:
+Version 0.2.0:
+-Monsters now spawn in groups of species rather than being randomly scattered
+-Added a controls menu, displayed by pressing / or ? or as an option in the main menu
 -Fixed a bug where perception counted as 1 less than it should
 -Made monsters a bit slower across the board
--Made the walls slightly darker
 -Rearranged the structure of the source code
 
 Version 0.1.2:
