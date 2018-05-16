@@ -366,17 +366,13 @@ def place_objects(room):
     #this is where we decide the chance of each monster or item appearing.
  
     #maximum number of monsters per room
-    max_monsters = from_dungeon_level([[4, 1], [5, 4], [6, 6]])
+    #max_monsters = from_dungeon_level([[4, 1], [5, 4], [6, 6]])
  
     #chance of each monster
     monster_chances = {}
-    monster_chances['asmu'] = 50  #always shows up, even if all other monsters have 0 chance
-    monster_chances['qunat'] = 30
-    monster_chances['jowiv'] = 20
-    monster_chances['zaeif'] = 15
-    monster_chances['linorl'] = from_dungeon_level([[10, 1], [30, 5], [60, 7]])
-    monster_chances['miirloc'] = 5
-    monster_chances['wirqen\'kaak'] = 1
+    for name in monst.properties:
+        if name != 'player':
+            monster_chances[name] = monst.properties[name].chances
  
     #maximum number of items per room
     max_items = from_dungeon_level([[0, 1], [0, 4]])
@@ -392,8 +388,10 @@ def place_objects(room):
  
  
     #choose random number of monsters
+    choice = random_choice(monster_chances)
+    max_monsters = monst.properties[choice].group_size
     num_monsters = libtcod.random_get_int(0, 0, max_monsters)
- 
+    
     for i in range(num_monsters):
         #choose random spot for this monster
         x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
@@ -401,51 +399,7 @@ def place_objects(room):
  
         #only place it if the tile is not blocked
         if not is_blocked(x, y):
-            choice = random_choice(monster_chances)
-            if choice == 'asmu':
-                character = 'a'
-                color = libtcod.light_blue
-                fighter_component = object.Fighter(hp=20, defense=0, power=3, dex=3, speed=5, perception=5, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
-                                 
-            elif choice == 'qunat':
-                character = 'q'
-                color = libtcod.light_red
-                fighter_component = object.Fighter(hp=25, defense=1, power=5, dex=11, speed=6, perception=6, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
-                                 
-            elif choice == 'jowiv':
-                character = 'j'
-                color = libtcod.light_yellow
-                fighter_component = object.Fighter(hp=30, defense=7, power=4, dex=5, speed=2, perception=5, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
-                
-            elif choice == 'zaeif':
-                character = 'Z'
-                color = libtcod.light_cyan
-                fighter_component = object.Fighter(hp=40, defense=0, power=10, dex=4, speed=9, perception=5, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
- 
-            elif choice == 'linorl':
-                character = 'L'
-                color = libtcod.light_green
-                fighter_component = object.Fighter(hp=45, defense=3, power=8, dex=8, speed=7, perception=7, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
-                                 
-            elif choice == 'miirloc':
-                character = 'M'
-                color = libtcod.light_purple
-                fighter_component = object.Fighter(hp=60, defense=5, power=12, dex=6, speed=3, perception=6, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
-
-            elif choice == 'wirqen\'kaak':
-                character = '&'
-                color = libtcod.lighter_violet
-                fighter_component = object.Fighter(hp=80, defense=7, power=15, dex=6, speed=10, perception=8, luck=libtcod.random_get_int(0,0,10), death_function=object.monster_death)
-                ai_component = object.BasicMonster()
- 
-            monster = object.Object(x, y, character, choice, color, blocks=True, fighter=fighter_component, ai=ai_component)
-            cfg.objects.append(monster)
+            object.make_monster(x, y, choice, monst.properties[choice])
  
     #choose random number of items
     num_items = libtcod.random_get_int(0, 0, max_items)
