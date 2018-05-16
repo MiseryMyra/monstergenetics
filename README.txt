@@ -1,7 +1,7 @@
 =============================
-|  MONSTER GENETICS 0.1.3   |
+|  MONSTER GENETICS 0.2.0   |
 |       By MiseryMyra       |
-| Last revision: 05/14/2018 |
+| Last revision: 05/16/2018 |
 =============================
 
 -------------
@@ -37,6 +37,8 @@ D: Display the monster descriptions window
 ESC or Q: Quit to main menu
 
 Mouse: Click on menu options, hover over monsters to see stats
+
+/ or ?: Display controls
 
 
 -------------
@@ -119,15 +121,9 @@ Here is a list of features that I would like to incorporate in future versions:
 
 -An options menu for changing parameters
 
--A list of controls in a window displayed by pressing / or ?
-
 -More player interaction, including spawning and possibly designing monsters
 
 -Adjust room generation to make more interesting shapes
-
--Make monsters spawn in clusters
-
--Clean up and release the source code
 
 
 ---------------------
