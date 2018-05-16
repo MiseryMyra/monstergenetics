@@ -2,6 +2,8 @@ import libtcodpy as libtcod
 
 #module used for configuring settings and initializing globals
 
+VERSION_NUMBER = '0.2.0'
+
 ALL_SEEING = True #displays full map
 IGNORE_PLAYER = True #monsters don't target player
 XRAY_VISION = True #monsters see through walls
