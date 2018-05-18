@@ -21,7 +21,7 @@ def get_names_under_mouse():
             if obj.fighter:
                 name = name.capitalize()
                 mon = obj.fighter
-                stats = ' (HP:' + str(mon.hp) + '/' + str(mon.max_hp) + ' PW:' + str(mon.power) + ' DF:' + str(mon.defense) + ' DX:' + str(mon.dex) + ' SP:' + str(mon.speed) + ' PR:' + str(mon.perception) + ' LK:' + str(mon.luck) + ' XP:' + str(mon.xp) + ' NT:' + str(mon.nutrition) + '/' + str(mon.max_nutrition) + ')'
+                stats = ' (HP:' + str(mon.hp) + '/' + str(mon.max_hp) + ' PW:' + str(mon.power) + ' DF:' + str(mon.defense) + ' DX:' + str(mon.dex) + ' SP:' + str(mon.speed) + ' PR:' + str(mon.perception) + ' LK:' + str(mon.luck) + ' SC:' + str(mon.social) + ' AG:' + str(mon.aggro) + ' XP:' + str(mon.xp) + ' NT:' + str(mon.nutrition) + '/' + str(mon.max_nutrition) + ')'
                 name = name + stats
                 
             names.append(name)
