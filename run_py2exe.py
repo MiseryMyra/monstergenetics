@@ -47,7 +47,10 @@ opts = { 'py2exe': {
                     'compressed':'True'}}
  
 # Run the setup utility.
-setup(console=[target_file],
+setup(windows=[target_file],
       data_files=my_files,
       zipfile=None,
       options=opts)
+      
+os.rename('dist/main.exe','dist/MonsterGenetics.exe')
+os.rename('dist','Monster Genetics')
