@@ -298,7 +298,8 @@ def menu(header, options, width, numbers = False):
 
         if index >= 0 and index < len(options): return index
         #if they pressed a letter that is not an option, return None
-        if cfg.key.c >= 7: return None
+        #also return none if the window gets closed
+        if cfg.key.c >= 7 or libtcod.console_is_window_closed(): return None
  
 def inventory_menu(header):
     #show a menu with each item of the inventory as an option
