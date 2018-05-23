@@ -13,7 +13,7 @@ def handle_keys():
         #Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
  
-    elif cfg.key.vk == libtcod.KEY_ESCAPE:
+    elif cfg.key.vk == libtcod.KEY_ESCAPE or libtcod.console_is_window_closed():
         return 'exit'  #exit game
  
     if cfg.game_state == 'playing':
