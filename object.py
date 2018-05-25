@@ -252,6 +252,9 @@ class Fighter:
         self.max_nutrition = calculate_nutrition(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.nutrition = self.max_nutrition/2
         self.starving = False
+        self.social = properties.sc
+        self.aggro = properties.ag
+        self.carry = None
  
     @property
     def power(self):  #return actual power, by summing up the bonuses from all equipped items
@@ -396,6 +399,42 @@ class Fighter:
         #remove food after being eaten
         cfg.objects.remove(food)
             
+    def eat_inv(self):
+        #eat some food, recover nutrition (no more than max) and some health
+        self.nutrition += self.carry.nutrition
+        
+        health = self.carry.nutrition/10
+        self.heal(health)
+        
+        if self.nutrition > self.max_nutrition:
+            self.nutrition = self.max_nutrition
+            
+        #no longer starving
+        if self.starving:
+            self.starving = False
+            
+        gui.message(self.owner.name.capitalize() + ' eats the ' + self.carry.name + ' for ' + str(self.carry.nutrition) + ' nutrition.', libtcod.light_azure)
+            
+        #remove food after being eaten
+        self.carry = None
+            
+    def take(self, food):
+        #pick up the food, if not already carrying some
+        if not self.carry:
+            self.carry = food
+            gui.message(self.owner.name.capitalize() + ' picks up the ' + self.carry.name + '.', libtcod.dark_azure)
+            
+            #remove food after being picked up
+            cfg.objects.remove(food)
+            
+    def give(self, friend):
+        #gives food to friend
+        friend.carry = self.carry
+        gui.message(self.owner.name.capitalize() + ' gives the ' + self.carry.name + ' to ' + self.owner.name + '.', libtcod.dark_azure)
+
+        #remove food from inventory
+        self.carry = None
+        
     def reproduce(self, mate):
         #make another instance of the fighter with properties from self and mate
         #properties are randomly mutated as well
@@ -413,11 +452,13 @@ class Fighter:
             speed = mutate((self.speed + mate.speed)/2, cfg.MUTATE_PROBABILITY, cfg.MUTATE_FACTOR)
             perception = mutate((self.perception + mate.perception)/2, cfg.MUTATE_PROBABILITY, cfg.MUTATE_FACTOR)
             luck = mutate((self.luck + mate.luck)/2, cfg.MUTATE_PROBABILITY, cfg.MUTATE_FACTOR)
+            social = mutate((self.social + mate.social)/2, cfg.MUTATE_PROBABILITY, cfg.MUTATE_FACTOR)
+            aggro = mutate((self.aggro + mate.aggro)/2, cfg.MUTATE_PROBABILITY, cfg.MUTATE_FACTOR)
             
             #set new color
             color = color_mutate(monster.color, mate.owner.color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
             
-            properties = monst.Monster(monster.char, color, hp, power, defense, dex, speed, perception, luck)
+            properties = monst.Monster(monster.char, color, hp, power, defense, dex, speed, perception, luck, social, aggro)
             
             #always created with maxed out stats
             make_monster(x, y, monster.name, properties)
@@ -448,51 +489,79 @@ class BasicMonster:
             food = monster.nearest_object(radius, near_objects, fighter=False, item=False, corpse=True, name='', different=False)
             
             #food is priority when starving
-            if food and monster.fighter.starving:
-            
-                #move toward food if far away
-                if monster.distance_to(food) >= 2:
-                    monster.move_astar(food)
+            if monster.fighter.starving:
+                if monster.fighter.carry:
+                    monster.fighter.eat_inv()
+                elif food:
+                    #move toward food if far away
+                    if monster.distance_to(food) >= 2:
+                        monster.move_astar(food)
      
-                #close enough, eat
-                else:
-                    monster.fighter.eat(food)
+                    #close enough, eat
+                    else:
+                        monster.fighter.eat(food)
+                
+			#fight enemies that are literally right next to you
+            elif enemy and monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0:
+                monster.fighter.attack(enemy)
+			
+            #choose enemy over friend
+            elif enemy and friend and monster.fighter.aggro >= monster.fighter.social:
             
-            elif enemy:
-     
-                #move toward enemy if far away
-                if monster.distance_to(enemy) >= 2:
+                #if high aggression, move toward enemy
+                if monster.distance_to(enemy) >= 2 and monster.fighter.aggro > 6:
                     monster.move_astar(enemy)
-     
-                #close enough, attack!
-                elif enemy.fighter.hp > 0:
-                    monster.fighter.attack(enemy)
+
+                #if low aggression, run from enemy
+                elif monster.fighter.aggro <= 6:
+                    monster.move_away(enemy.x, enemy.y)
+
                     
-            elif friend and monster.fighter.cooldown == 0 and cfg.population[monster.name] < cfg.POPULATION_CAP:
+            #only friend, or choose friend over enemy
+            elif friend and ((friend.fighter.starving and monster.fighter.carry != None) or (friend.fighter.cooldown == 0 and cfg.population[monster.name] < cfg.POPULATION_CAP)):
             
                 #move toward friend if far away
                 if monster.distance_to(friend) >= 2:
                     monster.move_astar(friend)
+                    
+                elif friend.fighter.starving and monster.fighter.carry:
+                    monster.fighter.give(friend.fighter)
      
                 #close enough, mate
-                elif friend.fighter.cooldown == 0:
+                else:
                     monster.fighter.reproduce(friend.fighter)
                     monster.fighter.cooldown = monster.fighter.max_cooldown
                     friend.fighter.cooldown = friend.fighter.max_cooldown
                 
-            #does not cannibalize corpses unless starving
-            elif food and monster.name not in food.name and monster.fighter.nutrition < monster.fighter.max_nutrition/2:
-            
-                #move toward food if far away
-                if monster.distance_to(food) >= 2:
-                    monster.move_astar(food)
+            elif enemy:
      
-                #close enough, eat
-                else:
-                    monster.fighter.eat(food)
-                    
-            else:
+                #if high aggression, move toward enemy
+                if monster.distance_to(enemy) >= 2 and monster.fighter.aggro > 6:
+                    monster.move_astar(enemy)
+
+                #if low aggression, run from enemy
+                elif monster.fighter.aggro <= 6:
+                    monster.move_away(enemy.x, enemy.y)
+
+            #does not cannibalize corpses unless starving
+            elif food and monster.name not in food.name:
+                if monster.fighter.nutrition < monster.fighter.max_nutrition/2 or monster.fighter.carry == None:
             
+                    #move toward food if far away
+                    if monster.distance_to(food) >= 2:
+                        monster.move_astar(food)
+     
+                    #close enough, eat
+                    elif monster.fighter.carry != None:
+                        monster.fighter.eat(food)
+
+                    else:
+                        monster.fighter.take(food)
+                        
+                else:
+                    monster.fighter.wander()
+
+            else:
                 #randomly wander otherwise
                 monster.fighter.wander()
                 
