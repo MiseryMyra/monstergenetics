@@ -10,6 +10,8 @@ The player (@) exists primarily to observe the evolution of these species, but t
 
 ![Screenshot1](https://i.imgur.com/X0w3hpn.png)
 
+![Screenshot2](https://i.imgur.com/RQcibqi.png)
+
 
 ## Code
 **main.py**:
