@@ -492,7 +492,9 @@ class BasicMonster:
             if monster.fighter.starving:
                 if monster.fighter.carry:
                     monster.fighter.eat_inv()
-                elif food:
+                
+                #don't cannibalize if very high social
+                elif food and (monster.name not in food.name or monster.fighter.social <10):
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
                         monster.move_astar(food)
@@ -500,6 +502,15 @@ class BasicMonster:
                     #close enough, eat
                     else:
                         monster.fighter.eat(food)
+
+                #low social and very high aggro will try to kill and eat each other when starving
+                elif friend and (monster.fighter.social <= 4 or monster.fighter.aggro >=10):
+                    if monster.distance_to(friend) >=2:
+                        monster.move_astar(friend)
+                    
+                    #close enough, attack
+                    elif friend.fighter.hp > 0:
+                        monster.fighter.attack(friend)
                 
 			#fight enemies that are literally right next to you
             elif enemy and monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0:
