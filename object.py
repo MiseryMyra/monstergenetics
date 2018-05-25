@@ -528,7 +528,7 @@ class BasicMonster:
                     monster.fighter.give(friend.fighter)
      
                 #close enough, mate
-                else:
+                elif not friend.fighter.starving:
                     monster.fighter.reproduce(friend.fighter)
                     monster.fighter.cooldown = monster.fighter.max_cooldown
                     friend.fighter.cooldown = friend.fighter.max_cooldown
