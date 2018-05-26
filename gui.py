@@ -21,7 +21,8 @@ def get_names_under_mouse():
             if obj.fighter:
                 name = name.capitalize()
                 mon = obj.fighter
-                stats = ' (HP:' + str(mon.hp) + '/' + str(mon.max_hp) + ' PW:' + str(mon.power) + ' DF:' + str(mon.defense) + ' DX:' + str(mon.dex) + ' SP:' + str(mon.speed) + ' PR:' + str(mon.perception) + ' LK:' + str(mon.luck) + ' SC:' + str(mon.social) + ' AG:' + str(mon.aggro) + ' XP:' + str(mon.xp) + ' NT:' + str(mon.nutrition) + '/' + str(mon.max_nutrition) + ')'
+                #stats = ' (HP:' + str(mon.hp) + '/' + str(mon.max_hp) + ' PW:' + str(mon.power) + ' DF:' + str(mon.defense) + ' DX:' + str(mon.dex) + ' SP:' + str(mon.speed) + ' PR:' + str(mon.perception) + ' LK:' + str(mon.luck) + ' SC:' + str(mon.social) + ' AG:' + str(mon.aggro) + ' XP:' + str(mon.xp) + ' NT:' + str(mon.nutrition) + '/' + str(mon.max_nutrition) + ')'
+                stats = ' (HP:' + str(mon.hp) + '/' + str(mon.max_hp) + ' PW:' + str(mon.power) + ' DF:' + str(mon.defense) + ' DX:' + str(mon.dex) + ' SP:' + str(mon.speed) + ' PR:' + str(mon.perception) + ' LK:' + str(mon.luck) + ' XP:' + str(mon.xp) + ' NT:' + str(mon.nutrition) + '/' + str(mon.max_nutrition) + ')'
                 name = name + stats
                 
             names.append(name)
@@ -208,7 +209,11 @@ def bitmask_walls(x, y):
 
 def pick_wall_char(x, y):
     #picks which wall tile should be rendered at the given position based on surrounding walls
+    #single-line walls
     wall_map = {0 : libtcod.CHAR_HLINE, 2 : libtcod.CHAR_HLINE, 8 : libtcod.CHAR_VLINE, 10 : libtcod.CHAR_SE, 11 : libtcod.CHAR_SE, 16 : libtcod.CHAR_VLINE, 18 : libtcod.CHAR_NE, 22 : libtcod.CHAR_NE, 24 : libtcod.CHAR_VLINE, 26 : libtcod.CHAR_TEEW, 27 : libtcod.CHAR_TEEW, 30 : libtcod.CHAR_TEEW, 31 : libtcod.CHAR_VLINE, 64 : libtcod.CHAR_HLINE, 66 : libtcod.CHAR_HLINE, 72 : libtcod.CHAR_SW, 74 : libtcod.CHAR_TEEN, 75 : libtcod.CHAR_TEEN, 80 : libtcod.CHAR_NW, 82 : libtcod.CHAR_TEES, 86 : libtcod.CHAR_TEES, 88 : libtcod.CHAR_TEEE, 90 : libtcod.CHAR_CROSS, 91 : libtcod.CHAR_CROSS, 94 : libtcod.CHAR_CROSS, 95 : libtcod.CHAR_TEEE, 104 : libtcod.CHAR_SW, 106 : libtcod.CHAR_TEEN, 107 : libtcod.CHAR_HLINE, 120 : libtcod.CHAR_TEEE, 122 : libtcod.CHAR_CROSS, 123 : libtcod.CHAR_TEES, 126 : libtcod.CHAR_CROSS, 127 : libtcod.CHAR_NW, 208 : libtcod.CHAR_NW, 210 : libtcod.CHAR_TEES, 214 : libtcod.CHAR_HLINE, 216 : libtcod.CHAR_TEEE, 218 : libtcod.CHAR_CROSS, 219 : libtcod.CHAR_CROSS, 222 : libtcod.CHAR_TEEN, 223 : libtcod.CHAR_SW, 248 : libtcod.CHAR_VLINE, 250 : libtcod.CHAR_TEEW, 251 : libtcod.CHAR_NE, 254 : libtcod.CHAR_SE, 255 : ' '}
+    
+    #double-line walls
+    #wall_map = {0 : libtcod.CHAR_DHLINE, 2 : libtcod.CHAR_DHLINE, 8 : libtcod.CHAR_DVLINE, 10 : libtcod.CHAR_DSE, 11 : libtcod.CHAR_DSE, 16 : libtcod.CHAR_DVLINE, 18 : libtcod.CHAR_DNE, 22 : libtcod.CHAR_DNE, 24 : libtcod.CHAR_DVLINE, 26 : libtcod.CHAR_DTEEW, 27 : libtcod.CHAR_DTEEW, 30 : libtcod.CHAR_DTEEW, 31 : libtcod.CHAR_DVLINE, 64 : libtcod.CHAR_DHLINE, 66 : libtcod.CHAR_DHLINE, 72 : libtcod.CHAR_DSW, 74 : libtcod.CHAR_DTEEN, 75 : libtcod.CHAR_DTEEN, 80 : libtcod.CHAR_DNW, 82 : libtcod.CHAR_DTEES, 86 : libtcod.CHAR_DTEES, 88 : libtcod.CHAR_DTEEE, 90 : libtcod.CHAR_DCROSS, 91 : libtcod.CHAR_DCROSS, 94 : libtcod.CHAR_DCROSS, 95 : libtcod.CHAR_DTEEE, 104 : libtcod.CHAR_DSW, 106 : libtcod.CHAR_DTEEN, 107 : libtcod.CHAR_DHLINE, 120 : libtcod.CHAR_DTEEE, 122 : libtcod.CHAR_DCROSS, 123 : libtcod.CHAR_DTEES, 126 : libtcod.CHAR_DCROSS, 127 : libtcod.CHAR_DNW, 208 : libtcod.CHAR_DNW, 210 : libtcod.CHAR_DTEES, 214 : libtcod.CHAR_DHLINE, 216 : libtcod.CHAR_DTEEE, 218 : libtcod.CHAR_DCROSS, 219 : libtcod.CHAR_DCROSS, 222 : libtcod.CHAR_DTEEN, 223 : libtcod.CHAR_DSW, 248 : libtcod.CHAR_DVLINE, 250 : libtcod.CHAR_DTEEW, 251 : libtcod.CHAR_DNE, 254 : libtcod.CHAR_DSE, 255 : ' '}
 
     bitmask = bitmask_walls(x, y)
 
@@ -326,7 +331,7 @@ def msgbox(text, width=50):
 def display_monster_stats():
     message = 'Monster Statistics'
     #stats in the official order
-    stats_list = ['hp', 'pw', 'df', 'dx', 'sp', 'pr', 'lk', 'xp', 'nt']
+    stats_list = ['hp', 'pw', 'df', 'dx', 'sp', 'pr', 'lk', 'xp', 'nt', 'sc', 'ag']
     for name in list_monsters():
         if cfg.population[name] > 0:
             stats = total_monster_stats(name)
@@ -342,7 +347,7 @@ def display_monster_stats():
             stats_string = '\n\n' + avg_string + '\n' + max_string + '\n' + min_string
             message = message + stats_string
     
-    msgbox(message,75)
+    msgbox(message,86)
     
 def total_monster_stats(name):
     #returns the average, min, and max stats for a given monster population
@@ -355,7 +360,9 @@ def total_monster_stats(name):
     lk = {'avg' : 0, 'min': -1, 'max' : 0}
     xp = {'avg' : 0, 'min': -1, 'max' : 0}
     nt = {'avg' : 0, 'min': -1, 'max' : 0}
-    stats = {'hp' : hp, 'pw' : pw, 'df' : df, 'dx' : dx, 'sp' : sp, 'pr' : pr, 'lk' : lk, 'xp' : xp, 'nt' : nt}
+    sc = {'avg' : 0, 'min': -1, 'max' : 0}
+    ag = {'avg' : 0, 'min': -1, 'max' : 0}
+    stats = {'hp' : hp, 'pw' : pw, 'df' : df, 'dx' : dx, 'sp' : sp, 'pr' : pr, 'lk' : lk, 'xp' : xp, 'nt' : nt, 'sc' : sc, 'ag' : ag}
     pop = cfg.population[name]
     
     if pop < 1:
@@ -392,7 +399,7 @@ def total_monster_stats(name):
         
 def monster_stats(monster):
     #returns the stats of a given monster in a dictionary
-    stats = {'hp' : 0, 'pw' : 0, 'df' : 0, 'dx' : 0, 'sp' : 0, 'pr' : 0, 'lk' : 0, 'xp' : 0, 'nt' : 0}
+    stats = {'hp' : 0, 'pw' : 0, 'df' : 0, 'dx' : 0, 'sp' : 0, 'pr' : 0, 'lk' : 0, 'xp' : 0, 'nt' : 0, 'sc' : 0, 'ag' : 0}
 
     if monster.owner.fighter:
         stats['hp'] = monster.max_hp
@@ -404,6 +411,8 @@ def monster_stats(monster):
         stats['lk'] = monster.luck
         stats['xp'] = monster.xp
         stats['nt'] = monster.max_nutrition
+        stats['sc'] = monster.social
+        stats['ag'] = monster.aggro
 
     return stats
     
