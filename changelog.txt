@@ -1,36 +1,40 @@
 Monster Genetics Changelog
 
-Version 0.2.1:
--Added social and aggression stats to monsters
--Monsters now carry and share food based on their social stat
--Monsters now run away based on their aggression stat and their hp
--Added more descriptions
--Fixed some typos in descriptions
--Player no longer gains XP from killed monsters
--Game now closes properly when a window is open
--Added a new very rare monster species
+Version 0.3.0:
+- Added plants, a passive food resource
+- Added social and aggression stats to monsters
+- Monsters now carry and share food based on their social stat
+- Monsters now run away based on their aggression stat and their hp
+- Monsters now lose nutrition more quickly if they are more powerful
+- Monsters no longer cannibalize corpses if their social stat is too high
+- Changed other monster behavior slightly
+- Added more descriptions
+- Fixed some typos in descriptions
+- Player no longer gains XP from killed monsters
+- Game now closes properly when a window is open
+- Added a new very rare monster species
 
 Version 0.2.0:
--Monsters now spawn in groups of species rather than being randomly scattered
--Added a controls menu, displayed by pressing / or ? or as an option in the main menu
--Fixed a bug where perception counted as 1 less than it should
--Made monsters a bit slower across the board
--Rearranged the structure of the source code
+- Monsters now spawn in groups of species rather than being randomly scattered
+- Added a controls menu, displayed by pressing / or ? or as an option in the main menu
+- Fixed a bug where perception counted as 1 less than it should
+- Made monsters a bit slower across the board
+- Rearranged the structure of the source code
 
 Version 0.1.2:
--Walls are now displayed using box-drawing characters
--Floors are now displayed as small dots
--Fixed a crash caused by the player digging off-screen
--Fixed a crash caused by players trying to wander off screen
--Adjusted reproduction rates
--Monsters are now born with half-full nutrition
--Monsters that die while starving leave less nutritious remains
--Changed some of the box-drawing characters in the font file
--Fixed a rare bug where remains of monsters say that they're starving
+- Walls are now displayed using box-drawing characters
+- Floors are now displayed as small dots
+- Fixed a crash caused by the player digging off-screen
+- Fixed a crash caused by players trying to wander off screen
+- Adjusted reproduction rates
+- Monsters are now born with half-full nutrition
+- Monsters that die while starving leave less nutritious remains
+- Changed some of the box-drawing characters in the font file
+- Fixed a rare bug where remains of monsters say that they're starving
 
 Version 0.1.1:
--Added monster descriptions window, displayed by pressing D
--Added monster statistics window, displayed by pressing S
--Made walls brighter
--Shortened stat abbreviations
--Replaced "1 hit points" with "1 hit point"
+- Added monster descriptions window, displayed by pressing D
+- Added monster statistics window, displayed by pressing S
+- Made walls brighter
+- Shortened stat abbreviations
+- Replaced "1 hit points" with "1 hit point"
