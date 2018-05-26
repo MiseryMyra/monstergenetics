@@ -251,6 +251,7 @@ class Fighter:
         self.cooldown = self.max_cooldown
         self.max_nutrition = calculate_nutrition(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.nutrition = self.max_nutrition/2
+        self.calories = calculate_hunger(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.starving = False
         self.social = properties.sc
         self.aggro = properties.ag
@@ -364,7 +365,7 @@ class Fighter:
     def hunger(self):
         #lose nutrition, lose health if starving
         if self.nutrition > 0:
-            self.nutrition -= 1
+            self.nutrition -= self.calories
             
         else:
             #displays message when first starts starving
@@ -599,6 +600,7 @@ class BasicMonster:
             monster.fighter.timer += cfg.MAX_TIMER
             #lose hunger or starve
             monster.fighter.hunger()
+
  
 class ConfusedMonster:
     #AI for a temporarily confused monster (reverts to previous AI after a while).
@@ -726,6 +728,11 @@ def calculate_cooldown(max_hp, defense, power, dex, speed, perception, luck):
 def calculate_nutrition(max_hp, defense, power, dex, speed, perception, luck):
     #return max nutrition of a monster for given stats
     return 20*max_hp + luck
+
+def calculate_hunger(max_hp, defense, power, dex, speed, perception, luck):
+    #return how quickly a monster loses nutrition for given stats
+    return max(1, int(0.1*(power + speed)))
+
     
 def target_tile(max_range=None):
     #return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
