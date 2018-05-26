@@ -197,18 +197,22 @@ def play_game():
             for obj in cfg.objects:
                 if obj.ai:
                     obj.ai.take_turn()
-                    
-            #choose random tile
-            x = libtcod.random_get_int(0, 1, cfg.MAP_WIDTH)
-            y = libtcod.random_get_int(0, 1, cfg.MAP_HEIGHT)
-            #if the tile is unoccupied, grow plant
-            occupant = object.is_occupied(x, y)
-            if not occupant:
-                object.make_plant(x, y)
+
+            i = 0
+            while i < cfg.PLANT_GROWTH_RATE:
+                #choose random tile
+                x = libtcod.random_get_int(0, 1, cfg.MAP_WIDTH)
+                y = libtcod.random_get_int(0, 1, cfg.MAP_HEIGHT)
+                #if the tile is unoccupied, grow plant
+                occupant = object.is_occupied(x, y)
+                if not occupant:
+                    object.make_plant(x, y)
             
-            elif type(occupant) is not bool:
-                if occupant.name == 'plant':
-                    occupant.nutrition += 20
+                elif type(occupant) is not bool:
+                    if occupant.name == 'plant':
+                        occupant.nutrition += cfg.BASE_PLANT_NUTRITION
+                
+                i += 1
 
                 
             #update population counts

@@ -417,7 +417,7 @@ def place_objects(room):
             object.make_monster(x, y, choice, monst.properties[choice])
  
     #generate plants/food objects
-    max_plants = 3
+    max_plants = cfg.MAX_STARTING_PLANTS
     num_plants = libtcod.random_get_int(0, 0, max_plants)
  
     for i in range(num_plants):
