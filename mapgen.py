@@ -70,6 +70,21 @@ def is_blocked(x, y):
  
     return False
  
+def is_occupied(x, y):
+    #first test the map tile
+    if x in range(cfg.MAP_WIDTH) and y in range(cfg.MAP_HEIGHT):
+        if cfg.map[x][y].blocked:
+            return True
+    else:
+        return True
+ 
+    #now check for any objects
+    for obj in cfg.objects:
+        if obj.x == x and obj.y == y:
+            return True
+ 
+    return False
+
 def create_room(room):
     #go through the tiles in the rectangle and make them passable
     for x in range(room.x1 + 1, room.x2):
@@ -401,6 +416,19 @@ def place_objects(room):
         if not is_blocked(x, y):
             object.make_monster(x, y, choice, monst.properties[choice])
  
+    #generate plants/food objects
+    max_plants = 3
+    num_plants = libtcod.random_get_int(0, 0, max_plants)
+ 
+    for i in range(num_plants):
+        #choose random spot for this plant
+        x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
+        y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+ 
+        #only place it if the tile is not blocked
+        if not is_occupied(x, y):
+            object.make_plant(x, y)
+
     #choose random number of items
     num_items = libtcod.random_get_int(0, 0, max_items)
  

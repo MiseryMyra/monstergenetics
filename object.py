@@ -204,7 +204,7 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if fighter == (obj.fighter != None):
+            if obj.fighter != None:
                 if name == obj.name or name == '':
                     if ((not different) or obj.name != self.name) and corpse == obj.corpse:
                         dist = self.distance_to(obj)
@@ -470,6 +470,21 @@ class Fighter:
             
         else:
             gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.5)
+
+
+class Grower:
+    #combat-related properties and methods (monster, player, NPC).
+    def __init__(self, hp, death_function=None):
+        self.base_max_hp = hp
+        self.hp = hp
+        self.max_hp = hp
+        self.timer = libtcod.random_get_int(0, 0, cfg.MAX_TIMER) #initially desynced timers
+        self.max_cooldown = 200 #calculate_cooldown(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
+        self.cooldown = self.max_cooldown
+        self.max_nutrition = calculate_nutrition(hp, 0, 0, 0, 0, 0, 0)
+        self.nutrition = self.max_nutrition/2
+        self.speed = 0
+                    
  
 class BasicMonster:
     #AI for a basic monster.
@@ -556,14 +571,14 @@ class BasicMonster:
 
             #does not cannibalize corpses unless starving
             elif food and monster.name not in food.name:
-                if monster.fighter.nutrition < monster.fighter.max_nutrition/2 or monster.fighter.carry == None:
+                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.name != 'plant'):
             
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
                         monster.move_astar(food)
      
                     #close enough, eat
-                    elif monster.fighter.carry != None:
+                    elif monster.fighter.carry != None or food.name == 'plant':
                         monster.fighter.eat(food)
 
                     else:
@@ -730,13 +745,16 @@ def target_tile(max_range=None):
                 (max_range is None or cfg.player.distance(x, y) <= max_range)):
             return (x, y)
             
-def random_nearby_tile(x0, y0, attempts):
+def random_nearby_tile(x0, y0, attempts, free=False):
     #return the position of a random unblocked adjacent tile with a probabilistic failure rate
     while attempts > 0:
         x = x0 + libtcod.random_get_int(0, -1, 1)
         y = y0 + libtcod.random_get_int(0, -1, 1)
         
-        if not is_blocked(x, y):
+        if free and not is_occupied(x, y):
+            return (x, y)
+        
+        elif not is_blocked(x, y):
             return (x, y)
             
         attempts -= 1
@@ -943,6 +961,21 @@ def is_blocked(x, y):
  
     return False
     
+def is_occupied(x, y):
+    #first test the map tile
+    if x in range(cfg.MAP_WIDTH) and y in range(cfg.MAP_HEIGHT):
+        if cfg.map[x][y].blocked:
+            return True
+    else:
+        return True
+ 
+    #now check for any objects
+    for obj in cfg.objects:
+        if obj.x == x and obj.y == y:
+            return True
+ 
+    return False
+    
 def object_count(name):
     #returns a count of objects that match a given name
     count = 0
@@ -992,3 +1025,14 @@ def make_monster(x, y, name, properties):
         ai_component = BasicMonster()
         monster = Object(x, y, character, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
         cfg.objects.append(monster)
+
+def make_plant(x, y):
+    #makes a plant at a given position
+    character = '*'
+    color = libtcod.dark_green*0.7
+    hp = mutate(5, 0.3, 0.1)
+    
+    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower(hp))
+    plant.nutrition = plant.fighter.nutrition
+    cfg.objects.append(plant)
+    plant.send_to_back()

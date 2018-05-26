@@ -198,6 +198,14 @@ def play_game():
                 if obj.ai:
                     obj.ai.take_turn()
                     
+            #choose random tile
+            x = libtcod.random_get_int(0, 1, cfg.MAP_WIDTH)
+            y = libtcod.random_get_int(0, 1, cfg.MAP_HEIGHT)
+            #if the tile is unoccupied, grow plant
+            if not object.is_occupied(x, y):
+                object.make_plant(x, y)
+
+                
             #update population counts
             #update_population()
             object.update_max_population()

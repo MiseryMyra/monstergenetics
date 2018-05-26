@@ -18,7 +18,7 @@ def get_names_under_mouse():
         if obj.x == x and obj.y == y and (libtcod.map_is_in_fov(cfg.fov_map, obj.x, obj.y) or cfg.ALL_SEEING):
             name = obj.name
             
-            if obj.fighter:
+            if obj.fighter and name is not 'plant':
                 name = name.capitalize()
                 mon = obj.fighter
                 stats = ' (HP:' + str(mon.hp) + '/' + str(mon.max_hp) + ' PW:' + str(mon.power) + ' DF:' + str(mon.defense) + ' DX:' + str(mon.dex) + ' SP:' + str(mon.speed) + ' PR:' + str(mon.perception) + ' LK:' + str(mon.luck) + ' SC:' + str(mon.social) + ' AG:' + str(mon.aggro) + ' XP:' + str(mon.xp) + ' NT:' + str(mon.nutrition) + '/' + str(mon.max_nutrition) + ')'
@@ -96,7 +96,8 @@ def list_monsters():
     #returns a list of monster names, sorted by population value
     names = []
     for key, value in sorted(cfg.population.iteritems(), key=lambda (k,v): (v,k), reverse=True):
-        names.append(key)
+        if key is not 'plant':
+            names.append(key)
 
     return names
         
