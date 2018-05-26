@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 
 #module used for configuring settings and initializing globals
 
-VERSION_NUMBER = '0.2.1'
+VERSION_NUMBER = '0.3.0'
 
 ALL_SEEING = True #displays full map
 IGNORE_PLAYER = True #monsters don't target player
@@ -73,7 +73,9 @@ COLOR_MUTATE = 0.07
 #resource properties
 MAX_STARTING_PLANTS = 3 #maximum number of plants to initially spawn per room
 BASE_PLANT_NUTRITION = 20
-PLANT_GROWTH_RATE = 1 #number of new plants that grow each turn
+PLANT_GROWTH_PROBABILITY = 0.3 #probability that plants will grow in a turn
+PLANT_GROWTH_RATE = 2 #number of new plants that will grow
+PLANT_CHAR = '\"'
  
 #experience and level-ups
 LEVEL_UP_BASE = 200000000
