@@ -69,6 +69,11 @@ REPRODUCTION_ATTEMPTS = 3
 MUTATE_PROBABILITY = 1.0
 MUTATE_FACTOR = 0.2
 COLOR_MUTATE = 0.07
+
+#resource properties
+MAX_STARTING_PLANTS = 3 #maximum number of plants to initially spawn per room
+BASE_PLANT_NUTRITION = 20
+PLANT_GROWTH_RATE = 1 #number of new plants that grow each turn
  
 #experience and level-ups
 LEVEL_UP_BASE = 200000000

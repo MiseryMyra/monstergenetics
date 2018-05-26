@@ -543,15 +543,9 @@ class Fighter:
 
 class Grower:
     #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, hp, death_function=None):
-        self.base_max_hp = hp
-        self.hp = hp
-        self.max_hp = hp
+    def __init__(self, death_function=None):
         self.timer = libtcod.random_get_int(0, 0, cfg.MAX_TIMER) #initially desynced timers
-        self.max_cooldown = 200 #calculate_cooldown(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
-        self.cooldown = self.max_cooldown
-        self.max_nutrition = calculate_nutrition(hp, 0, 0, 0, 0, 0, 0)
-        self.nutrition = self.max_nutrition/2
+        self.nutrition = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
         self.speed = 0
                     
  
@@ -1119,9 +1113,8 @@ def make_plant(x, y):
     #makes a plant at a given position
     character = '*'
     color = libtcod.dark_green*0.7
-    hp = mutate(3, 0.3, 0.1)
     
-    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower(hp))
+    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower())
     plant.nutrition = plant.fighter.nutrition
     cfg.objects.append(plant)
     plant.send_to_back()
