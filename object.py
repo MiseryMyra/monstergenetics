@@ -278,7 +278,7 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if fighter == (obj.fighter != None) or item == (obj.fighter != None):
+            if fighter == (obj.fighter != None) or (item and (obj.fighter != None)):
                 if name == obj.name or name == '':
                     if ((not different) or obj.name != self.name) and corpse == obj.corpse:
                         dist = self.distance_to(obj)
@@ -597,7 +597,7 @@ class BasicMonster:
                         monster.fighter.attack(friend)
                 
 			#fight enemies that are literally right next to you
-            elif enemy and monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0:
+            elif enemy and (monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0):
                 monster.fighter.attack(enemy)
 			
             #choose enemy over friend
