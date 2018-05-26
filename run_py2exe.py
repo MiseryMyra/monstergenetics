@@ -12,7 +12,7 @@ target_file = 'main.py'
 assets_dir = '.\\'
  
 # Filetypes not to be included in the above.
-excluded_file_types = ['py','pyc','project','pydevproject']
+excluded_file_types = ['md','py','pyc','project','pydevproject']
  
 def get_data_files(base_dir, target_dir, list=[]):
     """
