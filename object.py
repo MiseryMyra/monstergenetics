@@ -204,7 +204,7 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if obj.fighter != None:
+            if fighter == (obj.fighter != None) or item == (obj.fighter != None):
                 if name == obj.name or name == '':
                     if ((not different) or obj.name != self.name) and corpse == obj.corpse:
                         dist = self.distance_to(obj)
@@ -502,7 +502,7 @@ class BasicMonster:
             near_objects = monster.look_around(radius)
             enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name='', different=True)
             friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name=monster.name, different=False)
-            food = monster.nearest_object(radius, near_objects, fighter=False, item=False, corpse=True, name='', different=False)
+            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, corpse=True, name='', different=False)
             
             #food is priority when starving
             if monster.fighter.starving:
@@ -579,11 +579,11 @@ class BasicMonster:
                         monster.move_astar(food)
      
                     #close enough, eat
-                    elif monster.fighter.carry != None or food.name == 'plant':
-                        monster.fighter.eat(food)
+                    elif monster.fighter.carry == None and food.name != 'plant':
+                        monster.fighter.take(food)
 
                     else:
-                        monster.fighter.take(food)
+                        monster.fighter.eat(food)
                         
                 else:
                     monster.fighter.wander()
