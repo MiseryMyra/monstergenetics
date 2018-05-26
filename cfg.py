@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 
 #module used for configuring settings and initializing globals
 
-VERSION_NUMBER = '0.2.0'
+VERSION_NUMBER = '0.2.1'
 
 ALL_SEEING = True #displays full map
 IGNORE_PLAYER = True #monsters don't target player
@@ -58,6 +58,11 @@ COOLDOWN_FACTOR = 1
 MIN_COOLDOWN = 120
 POPULATION_CAP = 100
 WANDER_ATTEMPTS = 5
+START_NUTRITION = 0.5 #percentage of starting nutrition
+HP_FROM_FOOD = 0.1 #percentage of hp gained from the nutrition of food eaten
+MAX_DEX = 20 #maximum dex for damage calculations
+MAX_AGGRO = 20 #maximum aggro for scared calculation
+CRIT_DIE = 20 #sides of a die used to roll against for crits
 
 #mutations
 REPRODUCTION_ATTEMPTS = 3
