@@ -159,7 +159,7 @@ def new_game():
     object.initialize_population()
  
     #a warm welcoming message!
-    gui.message('Beginning genetic simulation.', libtcod.desaturated_red)
+    gui.message('Beginning genetic simulation.', libtcod.light_red * 0.7)
  
     #initial equipment: a dagger
     #equipment_component = object.Equipment(slot='right hand', power_bonus=2)
@@ -216,7 +216,7 @@ def play_game():
             object.update_max_population()
  
 def main_menu():
-    libtcod.console_set_custom_font('terminale8x12_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+    libtcod.console_set_custom_font('terminal8x12_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
     libtcod.console_init_root(cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT, 'Monster Genetics', False)
     libtcod.sys_set_fps(cfg.LIMIT_FPS)
     img = libtcod.image_load('menu_background.png')

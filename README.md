@@ -10,6 +10,8 @@ The player (@) exists primarily to observe the evolution of these species, but t
 
 ![Screenshot1](https://i.imgur.com/X0w3hpn.png)
 
+![Screenshot2](https://i.imgur.com/RQcibqi.png)
+
 
 ## Code
 **main.py**:
@@ -96,6 +98,12 @@ A measure of how strong a monster is overall. Governs the reproduction rate.
 **Nutrition (NT)**:
 How much food a monster has. Once it reaches zero, the monster begins to starve!
 
+**Social (SC)**:
+Governs how much monsters interact with members of their own species.
+
+**Aggression (AG)**:
+Governs whether or not monsters fight or run away from enemies.
+
 **Color**:
 Purely cosmetic. Still subject to mutations.
 
@@ -117,9 +125,11 @@ The population bars in the lower left give the current population out of the max
 ## To-do
 Here is a list of features that I would like to incorporate in future versions:
 
-- Varied monster behavior based on genetic traits
+- More varied monster behavior based on genetic traits
 
-- More interaction between monsters of the same species beyond mating
+- More interaction between monsters of the same species
+
+- A better "run away" and "wander" algorithm
 
 - Expanded species descriptions, especially based on behavior
 
@@ -129,7 +139,9 @@ Here is a list of features that I would like to incorporate in future versions:
 
 - More player interaction, including spawning and possibly designing monsters
 
-- Adjust room generation to make more interesting shapes
+- Adjusted room generation to make more interesting shapes
+
+- A better looking and more readable statistics window
 
 
 ## Acknowledgments

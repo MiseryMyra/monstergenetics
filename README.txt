@@ -1,7 +1,7 @@
 =============================
-|  MONSTER GENETICS 0.2.0   |
+|  MONSTER GENETICS 0.2.1   |
 |       By MiseryMyra       |
-| Last revision: 05/16/2018 |
+| Last revision: 05/26/2018 |
 =============================
 
 -------------
@@ -76,6 +76,12 @@ A measure of how strong a monster is overall. Governs the reproduction rate.
 Nutrition (NT)
 How much food a monster has. Once it reaches zero, the monster begins to starve!
 
+Social (SC)
+Governs how much monsters interact with members of their own species.
+
+Aggression (AG)
+Governs whether or not monsters fight or run away from enemies.
+
 Color
 Purely cosmetic. Still subject to mutations.
 
@@ -105,27 +111,6 @@ population reached, which is capped at 100 per species, and they are sorted by
 current population levels.
 
 
--------------
-|   To-do   |
--------------
-
-Here is a list of features that I would like to incorporate in future versions:
-
--Varied monster behavior based on genetic traits
-
--More interaction between monsters of the same species beyond mating
-
--Expanded species descriptions, especially based on behavior
-
--Different environments, including hazards and resources
-
--An options menu for changing parameters
-
--More player interaction, including spawning and possibly designing monsters
-
--Adjust room generation to make more interesting shapes
-
-
 ---------------------
 |  Acknowledgments  |
 ---------------------
@@ -136,3 +121,5 @@ for developing traditional roguelikes or similar games.
 In particular, this game was built up from the python libtcod tutorial written by
 João F. Henriques (a.k.a. Jotaf), which is available here:
 http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod
+
+Additional contributions were made by Inspector Caracal.
