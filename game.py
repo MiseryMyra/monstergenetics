@@ -208,6 +208,7 @@ def play_game():
             
             elif type(occupant) is not bool:
                 if occupant.name == 'plant':
+                    occupant.nutrition += 20
 
                 
             #update population counts
@@ -240,3 +241,4 @@ def main_menu():
             gui.display_controls()
         elif choice == 3:  #quit
             break
+
