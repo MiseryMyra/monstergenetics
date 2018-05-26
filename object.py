@@ -137,6 +137,80 @@ class Object:
  
         #Delete the path to free memory
         libtcod.path_delete(my_path)
+        
+    def move_astar_pos(self, pos_x, pos_y):
+        #Create a FOV map that has the dimensions of the map
+        fov = libtcod.map_new(cfg.MAP_WIDTH, cfg.MAP_HEIGHT)
+ 
+        #Scan the current map each turn and set all the walls as unwalkable
+        for y1 in range(cfg.MAP_HEIGHT):
+            for x1 in range(cfg.MAP_WIDTH):
+                libtcod.map_set_properties(fov, x1, y1, not cfg.map[x1][y1].block_sight, not cfg.map[x1][y1].blocked)
+ 
+        #Scan all the objects to see if there are objects that must be navigated around
+        #Check also that the object isn't self or the target (so that the start and the end points are free)
+        #The AI class handles the situation if self is next to the target so it will not use this A* function anyway   
+        for obj in cfg.objects:
+            if obj.blocks and obj != self:
+                #Set the tile as a wall so it must be navigated around
+                libtcod.map_set_properties(fov, obj.x, obj.y, True, False)
+ 
+        #Allocate a A* path
+        #The 1.41 is the normal diagonal cost of moving, it can be set as 0.0 if diagonal moves are prohibited
+        if cfg.CHEBYSHEV_METRIC:
+            my_path = libtcod.path_new_using_map(fov, 1)
+        else:
+            my_path = libtcod.path_new_using_map(fov, 1.41)
+ 
+        #Compute the path between self's coordinates and the target's coordinates
+        libtcod.path_compute(my_path, self.x, self.y, pos_x, pos_y)
+ 
+        #Check if the path exists, and in this case, also the path is shorter than 100 tiles
+        #The path size matters if you want the monster to use alternative longer paths (for example through other rooms) if for example the player is in a corridor
+        #It makes sense to keep path size relatively low to keep the monsters from running around the map if there's an alternative path really far away        
+        if not libtcod.path_is_empty(my_path) and libtcod.path_size(my_path) < 100:
+            #Find the next coordinates in the computed full path
+            x, y = libtcod.path_walk(my_path, True)
+            if x or y:
+                #Set self's coordinates to the next path tile
+                self.x = x
+                self.y = y
+        else:
+            #Keep the old move function as a backup so that if there are no paths (for example another monster blocks a corridor)
+            #it will still try to move towards the player (closer to the corridor opening)
+            self.move_towards(pos_x, pos_y)  
+ 
+        #Delete the path to free memory
+        libtcod.path_delete(my_path)
+        
+    def run_away(self, target):
+        #moves away from target
+        max_distance = 0
+        positions = []
+        
+        #check all available positions one can move to
+        #make a list of all the best positions one can move to
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if not is_blocked(self.x + dx, self.y + dy):
+                    if positions == []:
+                        positions.append((self.x + dx, self.y + dy))
+                    else:
+                        dist = distance_between(self.x + dx, self.y + dy, target.x, target.y)
+                        if dist > max_distance:
+                            positions = [(self.x + dx, self.y + dy)]
+                            max_distance = dist
+                        elif dist == max_distance:
+                            positions.append((self.x + dx, self.y + dy))
+                            
+        if positions != []:
+            #pick a random position as they are all equally good
+            (x, y) = random.choice(positions)
+            self.move(x - self.x, y - self.y)
+            
+        else:
+            #no viable moves, revert to backup
+            self.move_away(target.x, target.y)
  
     def distance_to(self, other):
         #return the distance to another object
@@ -250,7 +324,7 @@ class Fighter:
         self.max_cooldown = calculate_cooldown(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.cooldown = self.max_cooldown
         self.max_nutrition = calculate_nutrition(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
-        self.nutrition = self.max_nutrition/2
+        self.nutrition = int(self.max_nutrition*cfg.START_NUTRITION)
         self.starving = False
         self.social = properties.sc
         self.aggro = properties.ag
@@ -291,6 +365,15 @@ class Fighter:
         bonus = sum(equipment.luck_bonus for equipment in get_all_equipped(self.owner))
         return self.base_luck + bonus
         
+    @property
+    def scared(self): #return true if monster is scared based on remaining hp and aggro
+        hp_percent = float(self.hp) / self.max_hp
+        scared_threshhold = float(cfg.MAX_AGGRO - self.aggro) / cfg.MAX_AGGRO
+        if hp_percent <= scared_threshhold:
+            return True
+        else:
+            return False
+        
     def wait(self):
         #wait until timer is up to make a move and reduce cooldown
         self.timer = self.timer - (self.speed + 1) #zero speed still moves
@@ -313,13 +396,13 @@ class Fighter:
         #a simple formula for attack damage
 
         #critical hit
-        if libtcod.random_get_int(0, 0, self.luck) > libtcod.random_get_int(0, 0, 20):
+        if libtcod.random_get_int(0, 0, self.luck) > libtcod.random_get_int(0, 0, cfg.CRIT_DIE):
             crit = 2
         else:
             crit = 1
 
-        min_power = int(float(min(self.dex,20))/20 * self.power)
-        min_defense = int(float(min(target.fighter.dex,20))/20 * target.fighter.defense)
+        min_power = int(float(min(self.dex, cfg.MAX_DEX))/cfg.MAX_DEX * self.power)
+        min_defense = int(float(min(target.fighter.dex, cfg.MAX_DEX))/cfg.MAX_DEX * target.fighter.defense)
         damage = libtcod.random_get_int(0, min_power * crit, self.power * crit) - libtcod.random_get_int(0, min_defense, target.fighter.defense)
  
         if damage > 0:
@@ -358,8 +441,8 @@ class Fighter:
                 if function is not None:
                     function(self.owner)
  
-                if self.owner != cfg.player:  #yield experience to the player
-                    cfg.player.fighter.xp += self.xp
+                #if self.owner != cfg.player:  #yield experience to the player
+                    #cfg.player.fighter.xp += self.xp
                     
     def hunger(self):
         #lose nutrition, lose health if starving
@@ -384,7 +467,7 @@ class Fighter:
         #eat some food, recover nutrition (no more than max) and some health
         self.nutrition += food.nutrition
         
-        health = food.nutrition/10
+        health = int(food.nutrition * cfg.HP_FROM_FOOD)
         self.heal(health)
         
         if self.nutrition > self.max_nutrition:
@@ -397,32 +480,17 @@ class Fighter:
         gui.message(self.owner.name.capitalize() + ' eats the ' + food.name + ' for ' + str(food.nutrition) + ' nutrition.', libtcod.light_azure)
             
         #remove food after being eaten
-        cfg.objects.remove(food)
+        if food in cfg.objects:
+            cfg.objects.remove(food)
             
-    def eat_inv(self):
-        #eat some food, recover nutrition (no more than max) and some health
-        self.nutrition += self.carry.nutrition
-        
-        health = self.carry.nutrition/10
-        self.heal(health)
-        
-        if self.nutrition > self.max_nutrition:
-            self.nutrition = self.max_nutrition
-            
-        #no longer starving
-        if self.starving:
-            self.starving = False
-            
-        gui.message(self.owner.name.capitalize() + ' eats the ' + self.carry.name + ' for ' + str(self.carry.nutrition) + ' nutrition.', libtcod.light_azure)
-            
-        #remove food after being eaten
-        self.carry = None
+        if food == self.carry:
+            self.carry = None
             
     def take(self, food):
         #pick up the food, if not already carrying some
         if not self.carry:
             self.carry = food
-            gui.message(self.owner.name.capitalize() + ' picks up the ' + self.carry.name + '.', libtcod.dark_azure)
+            gui.message(self.owner.name.capitalize() + ' picks up the ' + self.carry.name + '.', libtcod.light_azure * 0.7)
             
             #remove food after being picked up
             cfg.objects.remove(food)
@@ -430,7 +498,7 @@ class Fighter:
     def give(self, friend):
         #gives food to friend
         friend.carry = self.carry
-        gui.message(self.owner.name.capitalize() + ' gives the ' + self.carry.name + ' to ' + self.owner.name + '.', libtcod.dark_azure)
+        gui.message(self.owner.name.capitalize() + ' gives the ' + self.carry.name + ' to ' + self.owner.name + '.', libtcod.light_azure * 0.7)
 
         #remove food from inventory
         self.carry = None
@@ -469,7 +537,7 @@ class Fighter:
             gui.message(self.owner.name.capitalize() + ' reproduced!', libtcod.light_green)
             
         else:
-            gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.5)
+            gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.7)
  
 class BasicMonster:
     #AI for a basic monster.
@@ -491,7 +559,7 @@ class BasicMonster:
             #food is priority when starving
             if monster.fighter.starving:
                 if monster.fighter.carry:
-                    monster.fighter.eat_inv()
+                    monster.fighter.eat(monster.fighter.carry)
                 elif food:
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
@@ -509,12 +577,12 @@ class BasicMonster:
             elif enemy and friend and monster.fighter.aggro >= monster.fighter.social:
             
                 #if high aggression, move toward enemy
-                if monster.distance_to(enemy) >= 2 and monster.fighter.aggro > 6:
+                if monster.distance_to(enemy) >= 2 and not monster.fighter.scared:
                     monster.move_astar(enemy)
 
                 #if low aggression, run from enemy
-                elif monster.fighter.aggro <= 6:
-                    monster.move_away(enemy.x, enemy.y)
+                else:
+                    monster.run_away(enemy)
 
                     
             #only friend, or choose friend over enemy
@@ -524,6 +592,7 @@ class BasicMonster:
                 if monster.distance_to(friend) >= 2:
                     monster.move_astar(friend)
                     
+                #close enough, share food
                 elif friend.fighter.starving and monster.fighter.carry:
                     monster.fighter.give(friend.fighter)
      
@@ -536,14 +605,14 @@ class BasicMonster:
             elif enemy:
      
                 #if high aggression, move toward enemy
-                if monster.distance_to(enemy) >= 2 and monster.fighter.aggro > 6:
+                if monster.distance_to(enemy) >= 2 and not monster.fighter.scared:
                     monster.move_astar(enemy)
 
                 #if low aggression, run from enemy
-                elif monster.fighter.aggro <= 6:
-                    monster.move_away(enemy.x, enemy.y)
+                else:
+                    monster.run_away(enemy)
 
-            #does not cannibalize corpses unless starving
+            #get food, does not cannibalize corpses unless starving
             elif food and monster.name not in food.name:
                 if monster.fighter.nutrition < monster.fighter.max_nutrition/2 or monster.fighter.carry == None:
             
@@ -931,6 +1000,18 @@ def is_blocked(x, y):
             return True
  
     return False
+    
+def distance_between(x0, y0, x1, y1):
+    #return the distance between two points
+    dx = x0 - x1
+    dy = y0 - y1
+    
+    if cfg.CHEBYSHEV_METRIC:
+        distance = max(abs(dx), abs(dy))
+    else:
+        distance = math.sqrt(dx ** 2 + dy ** 2)
+        
+    return distance
     
 def object_count(name):
     #returns a count of objects that match a given name
