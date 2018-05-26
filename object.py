@@ -979,7 +979,7 @@ def is_occupied(x, y):
     #now check for any objects
     for obj in cfg.objects:
         if obj.x == x and obj.y == y:
-            return True
+            return obj
  
     return False
     
@@ -1037,7 +1037,7 @@ def make_plant(x, y):
     #makes a plant at a given position
     character = '*'
     color = libtcod.dark_green*0.7
-    hp = mutate(5, 0.3, 0.1)
+    hp = mutate(3, 0.3, 0.1)
     
     plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower(hp))
     plant.nutrition = plant.fighter.nutrition
