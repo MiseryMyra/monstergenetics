@@ -1,5 +1,15 @@
 Monster Genetics Changelog
 
+Version 0.2.1:
+-Added social and aggression stats to monsters
+-Monsters now carry and share food based on their social stat
+-Monsters now run away based on their aggression stat and their hp
+-Added more descriptions
+-Fixed some typos in descriptions
+-Player no longer gains XP from killed monsters
+-Game now closes properly when a window is open
+-Added a new very rare monster species
+
 Version 0.2.0:
 -Monsters now spawn in groups of species rather than being randomly scattered
 -Added a controls menu, displayed by pressing / or ? or as an option in the main menu
