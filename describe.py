@@ -36,7 +36,7 @@ def des_pw(pw):
     elif pw >= 40:
         return 'by bisecting its prey with a long bladed forelimb'
     elif pw >= 30:
-        return 'by crushing its prey with its garantuan jaws'
+        return 'by crushing its prey with its gargantuan jaws'
     elif pw >= 20:
         return 'by impaling its prey on its spear-like tail'
     elif pw >= 15:
@@ -63,7 +63,7 @@ def des_df(df):
     elif df >= 40:
         return 'is protected by a shimmering force field'
     elif df >= 30:
-        return 'is entirely crystaline with the hardness of diamond'
+        return 'is entirely crystalline with the hardness of diamond'
     elif df >= 20:
         return 'is covered with thick armor-like plating'
     elif df >= 15:
@@ -150,7 +150,7 @@ def des_pr(pr):
     elif pr >= 15:
         return 'with a single eye on its forehead that is very sensitive to infrared radiation'
     elif pr >= 12:
-        return 'with a parge pair of ears used for echolocation'
+        return 'with a large pair of ears used for echolocation'
     elif pr >= 10:
         return 'with a sensitive nose on a long snout'
     elif pr >= 8:
@@ -179,7 +179,7 @@ def des_hp(hp):
     elif hp >= 40:
         return 'has a fairly tall and hefty body'
     elif hp >= 30:
-        return 'stands no taller than one of us'
+        return 'stands no taller than a person'
     elif hp >= 20:
         return 'has a short lean body'
     elif hp >= 10:
@@ -187,7 +187,7 @@ def des_hp(hp):
     elif hp >= 5:
         return 'has a tiny frail body'
     else:
-        return 'has a miniscule delicate body'
+        return 'has a minuscule delicate body'
 
 def des_pop(pop):
     #returns a descriptor for a monster's population
@@ -208,13 +208,13 @@ def des_pop(pop):
     elif pop >= 5:
         return 'is endangered'
     elif pop >= 2:
-        return 'is critically endagered'
+        return 'is critically endangered'
     else:
         return 'is the last of its kind'
 
 def des_name(name):
     #returns a semi-random descriptor based on a monster's name
-    features = ['its striped exterior', 'a ribbed crest on its head', 'its long flowing mane', 'a hooked beak on its face', 'its forked prehensile tail', 'its transparent exterior', 'its spotted exterior', 'its long tusks', 'its asymmetric body', 'a disproportionately large claw', 'its reflective exterior', 'its segmented body', 'its spindly extra limbs', 'its complex mouthparts', 'a star-shaped mark on its back']
+    features = ['its striped exterior', 'a ribbed crest on its head', 'its long flowing mane', 'a hooked beak on its face', 'its forked prehensile tail', 'its transparent exterior', 'its spotted exterior', 'its long tusks', 'its asymmetric body', 'a disproportionately large claw', 'its reflective exterior', 'its spindly extra limbs', 'its complex mouthparts', 'a star-shaped mark on its back', 'its numerous slime-tipped filaments', 'its gaping maw', 'its short blunted antlers', 'its twisted fingernails', 'its bulging cheeks', 'its bushy brow', 'a false face on its backside', 'its numerous fins', 'a hump on its back', 'its flowering branches', 'its coiled proboscis', 'a strange moss growing on its exterior', 'its long whiskers', 'its broad and long front teeth', 'a series of glowing spots on its body', 'its brightly colored throat', 'a small pair of extra limbs on its face', 'its rotationally symmetric body', 'its ability to curl into a ball', 'its ability to shed its exterior', 'a series of small pouches in its back', 'its asymmetric face', 'its bristled forelimbs', 'a long bony finger on one forelimb', 'its translucent skin', 'its strainer-lined mouth', 'its coiled body']
     index = sum(bytearray(name)) % len(features)
 
     return features[index]
