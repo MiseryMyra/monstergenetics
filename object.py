@@ -278,7 +278,7 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if fighter == (obj.fighter != None):
+            if fighter == (obj.fighter != None) or (item and (obj.fighter != None)):
                 if name == obj.name or name == '':
                     if ((not different) or obj.name != self.name) and corpse == obj.corpse:
                         dist = self.distance_to(obj)
@@ -325,6 +325,7 @@ class Fighter:
         self.cooldown = self.max_cooldown
         self.max_nutrition = calculate_nutrition(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.nutrition = int(self.max_nutrition*cfg.START_NUTRITION)
+        self.calories = calculate_hunger(properties.hp, properties.df, properties.pw, properties.dx, properties.sp, properties.pr, properties.lk)
         self.starving = False
         self.social = properties.sc
         self.aggro = properties.ag
@@ -447,7 +448,7 @@ class Fighter:
     def hunger(self):
         #lose nutrition, lose health if starving
         if self.nutrition > 0:
-            self.nutrition -= 1
+            self.nutrition -= self.calories
             
         else:
             #displays message when first starts starving
@@ -538,6 +539,15 @@ class Fighter:
             
         else:
             gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.7)
+
+
+class Grower:
+    #combat-related properties and methods (monster, player, NPC).
+    def __init__(self, death_function=None):
+        self.timer = libtcod.random_get_int(0, 0, cfg.MAX_TIMER) #initially desynced timers
+        self.nutrition = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
+        self.speed = 0
+                    
  
 class BasicMonster:
     #AI for a basic monster.
@@ -554,13 +564,15 @@ class BasicMonster:
             near_objects = monster.look_around(radius)
             enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name='', different=True)
             friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name=monster.name, different=False)
-            food = monster.nearest_object(radius, near_objects, fighter=False, item=False, corpse=True, name='', different=False)
+            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, corpse=True, name='', different=False)
             
             #food is priority when starving
             if monster.fighter.starving:
                 if monster.fighter.carry:
                     monster.fighter.eat(monster.fighter.carry)
-                elif food:
+                
+                #don't cannibalize if very high social
+                elif food and (monster.name not in food.name or monster.fighter.social <10):
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
                         monster.move_astar(food)
@@ -568,9 +580,18 @@ class BasicMonster:
                     #close enough, eat
                     else:
                         monster.fighter.eat(food)
+
+                #low social and very high aggro will try to kill and eat each other when starving
+                elif friend and (monster.fighter.social <= 4 or monster.fighter.aggro >=10):
+                    if monster.distance_to(friend) >=2:
+                        monster.move_astar(friend)
+                    
+                    #close enough, attack
+                    elif friend.fighter.hp > 0:
+                        monster.fighter.attack(friend)
                 
 			#fight enemies that are literally right next to you
-            elif enemy and monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0:
+            elif enemy and (monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0):
                 monster.fighter.attack(enemy)
 			
             #choose enemy over friend
@@ -597,7 +618,7 @@ class BasicMonster:
                     monster.fighter.give(friend.fighter)
      
                 #close enough, mate
-                else:
+                elif not friend.fighter.starving:
                     monster.fighter.reproduce(friend.fighter)
                     monster.fighter.cooldown = monster.fighter.max_cooldown
                     friend.fighter.cooldown = friend.fighter.max_cooldown
@@ -614,18 +635,18 @@ class BasicMonster:
 
             #get food, does not cannibalize corpses unless starving
             elif food and monster.name not in food.name:
-                if monster.fighter.nutrition < monster.fighter.max_nutrition/2 or monster.fighter.carry == None:
+                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.name != 'plant'):
             
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
                         monster.move_astar(food)
      
                     #close enough, eat
-                    elif monster.fighter.carry != None:
-                        monster.fighter.eat(food)
+                    elif monster.fighter.carry == None and food.name != 'plant':
+                        monster.fighter.take(food)
 
                     else:
-                        monster.fighter.take(food)
+                        monster.fighter.eat(food)
                         
                 else:
                     monster.fighter.wander()
@@ -642,6 +663,7 @@ class BasicMonster:
             monster.fighter.timer += cfg.MAX_TIMER
             #lose hunger or starve
             monster.fighter.hunger()
+
  
 class ConfusedMonster:
     #AI for a temporarily confused monster (reverts to previous AI after a while).
@@ -769,6 +791,11 @@ def calculate_cooldown(max_hp, defense, power, dex, speed, perception, luck):
 def calculate_nutrition(max_hp, defense, power, dex, speed, perception, luck):
     #return max nutrition of a monster for given stats
     return 20*max_hp + luck
+
+def calculate_hunger(max_hp, defense, power, dex, speed, perception, luck):
+    #return how quickly a monster loses nutrition for given stats
+    return max(1, int(0.1*(power + speed)))
+
     
 def target_tile(max_range=None):
     #return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
@@ -788,13 +815,16 @@ def target_tile(max_range=None):
                 (max_range is None or cfg.player.distance(x, y) <= max_range)):
             return (x, y)
             
-def random_nearby_tile(x0, y0, attempts):
+def random_nearby_tile(x0, y0, attempts, free=False):
     #return the position of a random unblocked adjacent tile with a probabilistic failure rate
     while attempts > 0:
         x = x0 + libtcod.random_get_int(0, -1, 1)
         y = y0 + libtcod.random_get_int(0, -1, 1)
         
-        if not is_blocked(x, y):
+        if free and not is_occupied(x, y):
+            return (x, y)
+        
+        elif not is_blocked(x, y):
             return (x, y)
             
         attempts -= 1
@@ -1001,6 +1031,21 @@ def is_blocked(x, y):
  
     return False
     
+def is_occupied(x, y):
+    #first test the map tile
+    if x in range(cfg.MAP_WIDTH) and y in range(cfg.MAP_HEIGHT):
+        if cfg.map[x][y].blocked:
+            return True
+    else:
+        return True
+ 
+    #now check for any objects
+    for obj in cfg.objects:
+        if obj.x == x and obj.y == y:
+            return obj
+ 
+    return False
+
 def distance_between(x0, y0, x1, y1):
     #return the distance between two points
     dx = x0 - x1
@@ -1012,6 +1057,7 @@ def distance_between(x0, y0, x1, y1):
         distance = math.sqrt(dx ** 2 + dy ** 2)
         
     return distance
+
     
 def object_count(name):
     #returns a count of objects that match a given name
@@ -1062,3 +1108,13 @@ def make_monster(x, y, name, properties):
         ai_component = BasicMonster()
         monster = Object(x, y, character, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
         cfg.objects.append(monster)
+
+def make_plant(x, y):
+    #makes a plant at a given position
+    character = '*'
+    color = libtcod.dark_green*0.7
+    
+    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower())
+    plant.nutrition = plant.fighter.nutrition
+    cfg.objects.append(plant)
+    plant.send_to_back()
