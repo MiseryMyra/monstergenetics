@@ -266,7 +266,7 @@ class Object:
                 
         return found
         
-    def nearest_object(self, radius, near_objects, fighter, item, corpse, name, different):
+    def nearest_object(self, radius, near_objects, fighter, item, name, different):
         #return the nearest visible object matching given parameters
         #near_objects: list of visible objects
         #fighter: is a fighter, item: is an item
@@ -277,9 +277,9 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if fighter == (obj.fighter != None) or (item and (obj.fighter != None)):
+            if fighter == (obj.fighter != None) or (item and (obj.item != None)):
                 if name == obj.name or name == '':
-                    if ((not different) or obj.name != self.name) and corpse == obj.corpse:
+                    if ((not different) or obj.name != self.name):
                         dist = self.distance_to(obj)
                         if dist < nearest_distance:
                             nearest_obj = obj
@@ -544,12 +544,34 @@ class Food:
     #food properties
     def __init__(self, nutrition=10):
         self.nutrition = nutrition
+        self.age = 1
         
     def increase_nutrition(self, nutrition):
         self.nutrition += mutate(nutrition,1,0.2)
     
     def decrease_nutrition(self, nutrition):
         self.nutrition -= mutate(nutrition,1,0.2)
+    
+    #plants grow over time
+    def grow(self):
+        self.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
+        self.owner.color = self.owner.color*1.2
+        self.age = 1
+    
+    #corpses rot over time
+    def decompose(self):
+        cfg.objects.remove(self.owner)
+        
+    def age_up(self):
+        self.age += 1
+        if self.owner.corpse == True:
+            if self.age >= cfg.DECOMPOSITION_RATE:
+                self.decompose()
+        else:
+            if self.age >= cfg.PLANT_GROWTH_RATE:
+                self.grow()
+
+        
                     
  
 class BasicMonster:
@@ -565,9 +587,9 @@ class BasicMonster:
         else:
             radius = monster.fighter.perception
             near_objects = monster.look_around(radius)
-            enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name='', different=True)
-            friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name=monster.name, different=False)
-            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, corpse=True, name='', different=False)
+            enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, name='', different=True)
+            friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, name=monster.name, different=False)
+            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, name='', different=False)
             
             #food is priority when starving
             if monster.fighter.starving:
@@ -1004,6 +1026,7 @@ def monster_death(monster):
     monster.char = '%'
     monster.color = monster.color * 0.7
     monster.item = Food(monster.fighter.nutrition)
+    monster.item.owner = monster.fighter.owner
     monster.blocks = False
     monster.fighter = None
     monster.corpse = True
@@ -1118,8 +1141,8 @@ def make_plant(x, y):
     color = libtcod.desaturated_green
     color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
     
-    nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
+    nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.2)
     item_component = Food(nutri_component)
-    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, item=item_component)
+    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=False, item=item_component)
     cfg.objects.append(plant)
     plant.send_to_back()

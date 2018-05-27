@@ -71,11 +71,13 @@ MUTATE_FACTOR = 0.2
 COLOR_MUTATE = 0.07
 
 #resource properties
-MAX_STARTING_PLANTS = 3 #maximum number of plants to initially spawn per room
+MAX_STARTING_PLANTS = 3 #maximum number of plants to initially sprout per room
 BASE_PLANT_NUTRITION = 20
-PLANT_GROWTH_PROBABILITY = 0.3 #probability that plants will grow in a turn
-PLANT_GROWTH_RATE = 2 #number of new plants that will grow
+PLANT_GROWTH_RATE = 500 #how many turns it takes for a plant to grow larger
+PLANT_GROWTH_PROBABILITY = 0.3 #probability that plants will sprout in a turn
+NEW_PLANT_RATE = 2 #number of new plants that will sprout
 PLANT_CHAR = '\"'
+DECOMPOSITION_RATE = 500 #how many turns it takes before a corpse decomposes
  
 #experience and level-ups
 LEVEL_UP_BASE = 200000000
