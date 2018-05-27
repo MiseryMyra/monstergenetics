@@ -8,9 +8,9 @@ The player (@) exists primarily to observe the evolution of these species, but t
 
 ### Screenshots
 
-![Screenshot1](https://i.imgur.com/X0w3hpn.png)
+![Screenshot1](https://i.imgur.com/iyxDHx6.png)
 
-![Screenshot2](https://i.imgur.com/RQcibqi.png)
+![Screenshot2](https://i.imgur.com/cAkwGCP.png)
 
 
 ## Code
@@ -142,6 +142,8 @@ Here is a list of features that I would like to incorporate in future versions:
 - Adjusted room generation to make more interesting shapes
 
 - A better looking and more readable statistics window
+
+- More sophisticated and varied plants
 
 
 ## Acknowledgments

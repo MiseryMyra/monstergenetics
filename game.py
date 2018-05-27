@@ -5,6 +5,7 @@ import object
 import mapgen
 import monst
 import gui
+import random
 
 #module used for main gameplay functions
  
@@ -198,22 +199,21 @@ def play_game():
                 if obj.ai:
                     obj.ai.take_turn()
 
-            i = 0
-            while i < cfg.PLANT_GROWTH_RATE:
-                #choose random tile
-                x = libtcod.random_get_int(0, 1, cfg.MAP_WIDTH)
-                y = libtcod.random_get_int(0, 1, cfg.MAP_HEIGHT)
-                #if the tile is unoccupied, grow plant
-                occupant = object.is_occupied(x, y)
-                if not occupant:
-                    object.make_plant(x, y)
-            
-                elif type(occupant) is not bool:
-                    if occupant.name == 'plant':
-                        occupant.item.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
-                        occupant.color = occupant.color*1.2
-                
-                i += 1
+                    
+            if random.random() < cfg.PLANT_GROWTH_PROBABILITY:
+                #grow PLANT_GROWTH_RATE number of plants
+                for i in range(cfg.PLANT_GROWTH_RATE):
+                    #choose random tile
+                    x = libtcod.random_get_int(0, 1, cfg.MAP_WIDTH)
+                    y = libtcod.random_get_int(0, 1, cfg.MAP_HEIGHT)
+                    #if the tile is unoccupied, grow plant
+                    occupant = object.is_occupied(x, y)
+                    if not occupant:
+                        object.make_plant(x, y)
+                    
+                    elif type(occupant) is not bool:
+                        if occupant.name == 'plant':
+                            occupant.item.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
 
                 
             #update population counts

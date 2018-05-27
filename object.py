@@ -949,7 +949,7 @@ def player_move_or_attack(dx, dy):
     #try to find an attackable object there
     target = None
     for obj in cfg.objects:
-        if obj.fighter and obj.x == x and obj.y == y:
+        if obj.fighter and obj.name != 'plant' and obj.x == x and obj.y == y:
             target = obj
             break
  
@@ -1076,7 +1076,7 @@ def initialize_population():
     #adds the names and populations of the monsters currently generated to the population dictionaries
     for obj in cfg.objects:
         if obj.fighter and obj.name not in cfg.max_population:
-            if obj.name is not 'player':
+            if obj.name is not 'player' and obj.name is not 'plant':
                 cfg.population[obj.name] = object_count(obj.name)
                 cfg.max_population[obj.name] = object_count(obj.name)
     
@@ -1114,8 +1114,9 @@ def make_monster(x, y, name, properties):
 
 def make_plant(x, y):
     #makes a plant at a given position
-    character = '\"'
-    color = libtcod.dark_green*0.5
+    character = cfg.PLANT_CHAR
+    color = libtcod.desaturated_green
+    color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
     
     nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
     item_component = Food(nutri_component)
