@@ -280,9 +280,9 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if fighter == (obj.fighter != None) or (item and (obj.item != None)):
+            if (fighter == (obj.fighter != None)) and (item == (obj.item != None)):
                 if name == obj.name or name == '':
-                    if ((not different) or obj.name != self.name):
+                    if (not different) or (obj.name != self.name):
                         dist = self.distance_to(obj)
                         if dist < nearest_distance:
                             nearest_obj = obj
@@ -588,7 +588,6 @@ class Food:
                 self.grow()
 
         
-                    
  
 class BasicMonster:
     #AI for a basic monster.
@@ -676,14 +675,14 @@ class BasicMonster:
 
             #get food, does not cannibalize corpses unless starving
             elif food and monster.name not in food.name:
-                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.name != 'plant'):
+                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.corpse):
             
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
                         monster.move_astar(food)
      
                     #close enough, eat
-                    elif monster.fighter.carry == None and food.name != 'plant':
+                    elif monster.fighter.carry == None and food.corpse:
                         monster.fighter.take(food)
 
                     else:
