@@ -210,7 +210,8 @@ def play_game():
             
                 elif type(occupant) is not bool:
                     if occupant.name == 'plant':
-                        occupant.nutrition += cfg.BASE_PLANT_NUTRITION
+                        occupant.item.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
+                        occupant.color = occupant.color*1.2
                 
                 i += 1
 

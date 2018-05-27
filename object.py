@@ -10,13 +10,12 @@ import gui
 class Object:
     #this is a generic object: the player, a monster, an item, the stairs...
     #it's always represented by a character on screen.
-    def __init__(self, x, y, char, name, color, nutrition=0, blocks=False, always_visible=False, corpse=False, fighter=None, ai=None, item=None, equipment=None):
+    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, corpse=False, fighter=None, ai=None, item=None, equipment=None):
         self.x = x
         self.y = y
         self.char = char
         self.name = name
         self.color = color
-        self.nutrition = 0
         self.blocks = blocks
         self.always_visible = always_visible
         self.corpse = corpse
@@ -466,9 +465,9 @@ class Fighter:
             
     def eat(self, food):
         #eat some food, recover nutrition (no more than max) and some health
-        self.nutrition += food.nutrition
+        self.nutrition += food.item.nutrition
         
-        health = int(food.nutrition * cfg.HP_FROM_FOOD)
+        health = int(food.item.nutrition * cfg.HP_FROM_FOOD)
         self.heal(health)
         
         if self.nutrition > self.max_nutrition:
@@ -478,7 +477,7 @@ class Fighter:
         if self.starving:
             self.starving = False
             
-        gui.message(self.owner.name.capitalize() + ' eats the ' + food.name + ' for ' + str(food.nutrition) + ' nutrition.', libtcod.light_azure)
+        gui.message(self.owner.name.capitalize() + ' eats the ' + food.name + ' for ' + str(food.item.nutrition) + ' nutrition.', libtcod.light_azure)
             
         #remove food after being eaten
         if food in cfg.objects:
@@ -541,12 +540,16 @@ class Fighter:
             gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.7)
 
 
-class Grower:
-    #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, death_function=None):
-        self.timer = libtcod.random_get_int(0, 0, cfg.MAX_TIMER) #initially desynced timers
-        self.nutrition = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
-        self.speed = 0
+class Food:
+    #food properties
+    def __init__(self, nutrition=10):
+        self.nutrition = nutrition
+        
+    def increase_nutrition(self, nutrition):
+        self.nutrition += mutate(nutrition,1,0.2)
+    
+    def decrease_nutrition(self, nutrition):
+        self.nutrition -= mutate(nutrition,1,0.2)
                     
  
 class BasicMonster:
@@ -1000,7 +1003,7 @@ def monster_death(monster):
     
     monster.char = '%'
     monster.color = monster.color * 0.7
-    monster.nutrition = max(monster.fighter.nutrition, monster.fighter.max_nutrition/3)
+    monster.item = Food(monster.fighter.nutrition)
     monster.blocks = False
     monster.fighter = None
     monster.corpse = True
@@ -1111,10 +1114,11 @@ def make_monster(x, y, name, properties):
 
 def make_plant(x, y):
     #makes a plant at a given position
-    character = '*'
-    color = libtcod.dark_green*0.7
+    character = '\"'
+    color = libtcod.dark_green*0.5
     
-    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower())
-    plant.nutrition = plant.fighter.nutrition
+    nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
+    item_component = Food(nutri_component)
+    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, item=item_component)
     cfg.objects.append(plant)
     plant.send_to_back()
