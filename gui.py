@@ -129,7 +129,10 @@ def render_all():
                     if wall:
                         libtcod.console_put_char_ex(cfg.con, x, y, pick_wall_char(x, y), cfg.color_light_wall, libtcod.black)
                     else:
-                        libtcod.console_put_char_ex(cfg.con, x, y, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
+                        if cfg.map[x][y].fertile > 0:
+                            libtcod.console_put_char_ex(cfg.con, x, y, cfg.FLOOR_CHAR, cfg.color_fertile_ground, libtcod.black)
+                        else:
+                            libtcod.console_put_char_ex(cfg.con, x, y, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
                         #since it's visible, explore it
                     cfg.map[x][y].explored = True
  

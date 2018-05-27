@@ -58,8 +58,11 @@ class Object:
                 if not cfg.map[self.x + dx][self.y + dy].blocked:
                     #clear the tile once it's dug out
                     if libtcod.map_is_in_fov(cfg.fov_map, self.x + dx, self.y + dy) or cfg.ALL_SEEING:
-                        libtcod.console_put_char_ex(cfg.con, self.x + dx, self.y + dy, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
- 
+                        if cfg.map[self.x + dx][self.y + dy].fertile > 0:
+                            libtcod.console_put_char_ex(cfg.con, self.x + dx, self.y + dy, cfg.FLOOR_CHAR, cfg.color_fertile_ground, libtcod.black)
+                        else:
+                            libtcod.console_put_char_ex(cfg.con, self.x + dx, self.y + dy, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
+
     def move_towards(self, target_x, target_y):
         #vector from this object to the target, and distance
         dx = target_x - self.x
@@ -303,7 +306,10 @@ class Object:
     def clear(self):
         #erase the character that represents this object
         if libtcod.map_is_in_fov(cfg.fov_map, self.x, self.y) or cfg.ALL_SEEING:
-            libtcod.console_put_char_ex(cfg.con, self.x, self.y, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
+            if cfg.map[self.x][self.y].fertile > 0:
+                libtcod.console_put_char_ex(cfg.con, self.x, self.y, cfg.FLOOR_CHAR, cfg.color_fertile_ground, libtcod.black)
+            else:
+                libtcod.console_put_char_ex(cfg.con, self.x, self.y, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
  
  
 class Fighter:
@@ -480,11 +486,12 @@ class Fighter:
         gui.message(self.owner.name.capitalize() + ' eats the ' + food.name + ' for ' + str(food.item.nutrition) + ' nutrition.', libtcod.light_azure)
             
         #remove food after being eaten
-        if food in cfg.objects:
-            cfg.objects.remove(food)
-            
         if food == self.carry:
             self.carry = None
+
+        elif food in cfg.objects:
+            cfg.objects.remove(food)
+            
             
     def take(self, food):
         #pick up the food, if not already carrying some
@@ -554,12 +561,21 @@ class Food:
     
     #plants grow over time
     def grow(self):
-        self.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
-        self.owner.color = self.owner.color*1.2
-        self.age = 1
+        if cfg.map[self.owner.x][self.owner.y].fertile > 0:
+            self.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
+            self.owner.color = self.owner.color*1.2
+            cfg.map[self.owner.x][self.owner.y].leech()
+            self.age = 1
     
     #corpses rot over time
     def decompose(self):
+        x = self.owner.x-1
+        y = self.owner.y-1
+        
+        for i in range(3):
+            for j in range(3):
+                cfg.map[x+i][y+j].fertilize()
+
         cfg.objects.remove(self.owner)
         
     def age_up(self):
@@ -1136,13 +1152,15 @@ def make_monster(x, y, name, properties):
         cfg.objects.append(monster)
 
 def make_plant(x, y):
-    #makes a plant at a given position
-    character = cfg.PLANT_CHAR
-    color = libtcod.desaturated_green
-    color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
+    if cfg.map[x][y].fertile > 0:
+        #makes a plant at a given position
+        character = cfg.PLANT_CHAR
+        color = libtcod.desaturated_green
+        color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
     
-    nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.2)
-    item_component = Food(nutri_component)
-    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=False, item=item_component)
-    cfg.objects.append(plant)
-    plant.send_to_back()
+        nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.2)
+        item_component = Food(nutri_component)
+        plant = Object(x, y, character, 'plant', color, blocks=False, corpse=False, item=item_component)
+        cfg.objects.append(plant)
+        cfg.map[x][y].leech()
+        plant.send_to_back()
