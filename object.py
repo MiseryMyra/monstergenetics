@@ -10,13 +10,12 @@ import gui
 class Object:
     #this is a generic object: the player, a monster, an item, the stairs...
     #it's always represented by a character on screen.
-    def __init__(self, x, y, char, name, color, nutrition=0, blocks=False, always_visible=False, corpse=False, fighter=None, ai=None, item=None, equipment=None):
+    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, corpse=False, fighter=None, ai=None, item=None, equipment=None):
         self.x = x
         self.y = y
         self.char = char
         self.name = name
         self.color = color
-        self.nutrition = 0
         self.blocks = blocks
         self.always_visible = always_visible
         self.corpse = corpse
@@ -59,8 +58,11 @@ class Object:
                 if not cfg.map[self.x + dx][self.y + dy].blocked:
                     #clear the tile once it's dug out
                     if libtcod.map_is_in_fov(cfg.fov_map, self.x + dx, self.y + dy) or cfg.ALL_SEEING:
-                        libtcod.console_put_char_ex(cfg.con, self.x + dx, self.y + dy, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
- 
+                        if cfg.map[self.x + dx][self.y + dy].fertile > 0:
+                            libtcod.console_put_char_ex(cfg.con, self.x + dx, self.y + dy, cfg.FLOOR_CHAR, cfg.color_fertile_ground, libtcod.black)
+                        else:
+                            libtcod.console_put_char_ex(cfg.con, self.x + dx, self.y + dy, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
+
     def move_towards(self, target_x, target_y):
         #vector from this object to the target, and distance
         dx = target_x - self.x
@@ -267,7 +269,7 @@ class Object:
                 
         return found
         
-    def nearest_object(self, radius, near_objects, fighter, item, corpse, name, different):
+    def nearest_object(self, radius, near_objects, fighter, item, name, different):
         #return the nearest visible object matching given parameters
         #near_objects: list of visible objects
         #fighter: is a fighter, item: is an item
@@ -278,9 +280,9 @@ class Object:
         
         for obj in near_objects:
             #if fighter and item are both true, it must be both
-            if fighter == (obj.fighter != None) or (item and (obj.fighter != None)):
+            if (fighter == (obj.fighter != None)) and (item == (obj.item != None)):
                 if name == obj.name or name == '':
-                    if ((not different) or obj.name != self.name) and corpse == obj.corpse:
+                    if (not different) or (obj.name != self.name):
                         dist = self.distance_to(obj)
                         if dist < nearest_distance:
                             nearest_obj = obj
@@ -304,7 +306,10 @@ class Object:
     def clear(self):
         #erase the character that represents this object
         if libtcod.map_is_in_fov(cfg.fov_map, self.x, self.y) or cfg.ALL_SEEING:
-            libtcod.console_put_char_ex(cfg.con, self.x, self.y, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
+            if cfg.map[self.x][self.y].fertile > 0:
+                libtcod.console_put_char_ex(cfg.con, self.x, self.y, cfg.FLOOR_CHAR, cfg.color_fertile_ground, libtcod.black)
+            else:
+                libtcod.console_put_char_ex(cfg.con, self.x, self.y, cfg.FLOOR_CHAR, cfg.color_light_ground, libtcod.black)
  
  
 class Fighter:
@@ -466,9 +471,9 @@ class Fighter:
             
     def eat(self, food):
         #eat some food, recover nutrition (no more than max) and some health
-        self.nutrition += food.nutrition
+        self.nutrition += food.item.nutrition
         
-        health = int(food.nutrition * cfg.HP_FROM_FOOD)
+        health = int(food.item.nutrition * cfg.HP_FROM_FOOD)
         self.heal(health)
         
         if self.nutrition > self.max_nutrition:
@@ -478,14 +483,15 @@ class Fighter:
         if self.starving:
             self.starving = False
             
-        gui.message(self.owner.name.capitalize() + ' eats the ' + food.name + ' for ' + str(food.nutrition) + ' nutrition.', libtcod.light_azure)
+        gui.message(self.owner.name.capitalize() + ' eats the ' + food.name + ' for ' + str(food.item.nutrition) + ' nutrition.', libtcod.light_azure)
             
         #remove food after being eaten
-        if food in cfg.objects:
-            cfg.objects.remove(food)
-            
         if food == self.carry:
             self.carry = None
+
+        elif food in cfg.objects:
+            cfg.objects.remove(food)
+            
             
     def take(self, food):
         #pick up the food, if not already carrying some
@@ -541,13 +547,47 @@ class Fighter:
             gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.7)
 
 
-class Grower:
-    #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, death_function=None):
-        self.timer = libtcod.random_get_int(0, 0, cfg.MAX_TIMER) #initially desynced timers
-        self.nutrition = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.1)
-        self.speed = 0
-                    
+class Food:
+    #food properties
+    def __init__(self, nutrition=10):
+        self.nutrition = nutrition
+        self.age = 1
+        
+    def increase_nutrition(self, nutrition):
+        self.nutrition += mutate(nutrition,1,0.2)
+    
+    def decrease_nutrition(self, nutrition):
+        self.nutrition -= mutate(nutrition,1,0.2)
+    
+    #plants grow over time
+    def grow(self):
+        if cfg.map[self.owner.x][self.owner.y].fertile > 0:
+            self.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
+            self.owner.color = self.owner.color*1.2
+            cfg.map[self.owner.x][self.owner.y].leech()
+            self.age = 1
+    
+    #corpses rot over time
+    def decompose(self):
+        x = self.owner.x-1
+        y = self.owner.y-1
+        
+        for i in range(3):
+            for j in range(3):
+                cfg.map[x+i][y+j].fertilize()
+
+        cfg.objects.remove(self.owner)
+        
+    def age_up(self):
+        self.age += 1
+        if self.owner.corpse == True:
+            if self.age >= cfg.DECOMPOSITION_RATE:
+                self.decompose()
+        else:
+            if self.age >= cfg.PLANT_GROWTH_RATE:
+                self.grow()
+
+        
  
 class BasicMonster:
     #AI for a basic monster.
@@ -562,9 +602,9 @@ class BasicMonster:
         else:
             radius = monster.fighter.perception
             near_objects = monster.look_around(radius)
-            enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name='', different=True)
-            friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, corpse=False, name=monster.name, different=False)
-            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, corpse=True, name='', different=False)
+            enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, name='', different=True)
+            friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, name=monster.name, different=False)
+            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, name='', different=False)
             
             #food is priority when starving
             if monster.fighter.starving:
@@ -635,14 +675,14 @@ class BasicMonster:
 
             #get food, does not cannibalize corpses unless starving
             elif food and monster.name not in food.name:
-                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.name != 'plant'):
+                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.corpse):
             
                     #move toward food if far away
                     if monster.distance_to(food) >= 2:
                         monster.move_astar(food)
      
                     #close enough, eat
-                    elif monster.fighter.carry == None and food.name != 'plant':
+                    elif monster.fighter.carry == None and food.corpse:
                         monster.fighter.take(food)
 
                     else:
@@ -1000,7 +1040,8 @@ def monster_death(monster):
     
     monster.char = '%'
     monster.color = monster.color * 0.7
-    monster.nutrition = max(monster.fighter.nutrition, monster.fighter.max_nutrition/3)
+    monster.item = Food(monster.fighter.nutrition)
+    monster.item.owner = monster.fighter.owner
     monster.blocks = False
     monster.fighter = None
     monster.corpse = True
@@ -1110,12 +1151,15 @@ def make_monster(x, y, name, properties):
         cfg.objects.append(monster)
 
 def make_plant(x, y):
-    #makes a plant at a given position
-    character = cfg.PLANT_CHAR
-    color = libtcod.desaturated_green
-    color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
+    if cfg.map[x][y].fertile > 0:
+        #makes a plant at a given position
+        character = cfg.PLANT_CHAR
+        color = libtcod.desaturated_green
+        color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
     
-    plant = Object(x, y, character, 'plant', color, blocks=False, corpse=True, fighter=Grower())
-    plant.nutrition = plant.fighter.nutrition
-    cfg.objects.append(plant)
-    plant.send_to_back()
+        nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.2)
+        item_component = Food(nutri_component)
+        plant = Object(x, y, character, 'plant', color, blocks=False, corpse=False, item=item_component)
+        cfg.objects.append(plant)
+        cfg.map[x][y].leech()
+        plant.send_to_back()

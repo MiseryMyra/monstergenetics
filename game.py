@@ -199,9 +199,13 @@ def play_game():
                 if obj.ai:
                     obj.ai.take_turn()
                     
+                if obj.item:
+                    obj.item.age_up()
+
+                    
             if random.random() < cfg.PLANT_GROWTH_PROBABILITY:
                 #grow PLANT_GROWTH_RATE number of plants
-                for i in range(cfg.PLANT_GROWTH_RATE):
+                for i in range(cfg.NEW_PLANT_RATE):
                     #choose random tile
                     x = libtcod.random_get_int(0, 1, cfg.MAP_WIDTH)
                     y = libtcod.random_get_int(0, 1, cfg.MAP_HEIGHT)
@@ -212,7 +216,7 @@ def play_game():
                     
                     elif type(occupant) is not bool:
                         if occupant.name == 'plant':
-                            occupant.nutrition += cfg.BASE_PLANT_NUTRITION
+                            occupant.item.grow()
 
                 
             #update population counts

@@ -9,10 +9,11 @@ import monst
 
 class Tile:
     #a tile of the map and its properties
-    def __init__(self, blocked, block_sight = None, hp = cfg.TILE_HP):
+    def __init__(self, blocked, block_sight = None, hp = cfg.TILE_HP, fertile = cfg.LAND_FERTILITY):
         self.blocked = blocked
         self.max_hp = hp
         self.hp = hp
+        self.fertile = fertile
  
         #all tiles start unexplored
         self.explored = False
@@ -36,6 +37,15 @@ class Tile:
 
                 #update map
                 cfg.fov_recompute = True
+                
+    def leech(self):
+        #reduce fertility level
+        self.fertile -= 1
+    
+    def fertilize(self):
+        #increase fertility level
+        #possibly tie to nutritional value of decomposing corpse?
+        self.fertile += 1
  
 class Rect:
     #a rectangle on the map. used to characterize a room.
