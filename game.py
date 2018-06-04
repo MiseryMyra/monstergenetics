@@ -179,6 +179,9 @@ def play_game():
         gui.render_all()
  
         libtcod.console_flush()
+        
+        #update objects map
+        object.update_objects_map()
  
         #level up if needed
         object.check_level_up()
