@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 
 #module used for configuring settings and initializing globals
 
-VERSION_NUMBER = '0.3.0'
+VERSION_NUMBER = '0.3.1'
 
 ALL_SEEING = True #displays full map
 IGNORE_PLAYER = True #monsters don't target player
@@ -40,7 +40,7 @@ MIN_SIZE = 6
 FULL_ROOMS = False
 
 #tile properties
-FLOOR_CHAR = 250
+FLOOR_CHAR = 250 #looks like this: .
 TILE_HP = 100
  
 #spell values
@@ -59,6 +59,7 @@ MIN_COOLDOWN = 120
 POPULATION_CAP = 100
 WANDER_ATTEMPTS = 5
 START_NUTRITION = 0.5 #percentage of starting nutrition
+CORPSE_MIN_NUTRITION = 0.3 #least percentage of max nutrition that remains in corpse after death
 HP_FROM_FOOD = 0.1 #percentage of hp gained from the nutrition of food eaten
 MAX_DEX = 20 #maximum dex for damage calculations
 MAX_AGGRO = 20 #maximum aggro for scared calculation
@@ -96,7 +97,7 @@ color_dark_wall = libtcod.Color(90, 90, 90)
 color_light_wall = libtcod.Color(150, 150, 150)
 color_dark_ground = libtcod.Color(45, 45, 45)
 color_light_ground = libtcod.Color(90, 90, 90)
-color_fertile_ground = libtcod.darkest_green
+color_fertile_ground = libtcod.darker_green * 0.7
 
 
 con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
@@ -109,6 +110,7 @@ key = libtcod.Key()
 map = []
 fov_map = []
 objects = []
+objects_map = []
 player = []
 stairs = []
 inventory = []
