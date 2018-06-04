@@ -38,7 +38,7 @@ Module for defining the initial properties for all the different monsters
 **object.py**:
 Module for object classes and related functions
 
-**run_py2exe**:
+**run_py2exe.py**:
 Generates binary with py2exe
 
 
@@ -128,6 +128,8 @@ Here is a list of features that I would like to incorporate in future versions:
 - More varied monster behavior based on genetic traits
 
 - More interaction between monsters of the same species
+
+- Proper genetics with Mendelian inheritance
 
 - A better "run away" and "wander" algorithm
 
