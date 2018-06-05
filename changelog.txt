@@ -1,5 +1,12 @@
 Monster Genetics Changelog
 
+Version 0.3.1:
+- Land can now be green and fertile, allowing plant growth
+- Plants now grow over time, becoming more nutritious at the cost of land fertility
+- Corpses now decay over time, fertilizing the surrounding land
+- Monster AI has been modified to be more efficient
+- Monsters that die while starving leave slightly less nutritious remains
+
 Version 0.3.0:
 - Added plants, a passive food resource
 - Added social and aggression stats to monsters

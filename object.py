@@ -253,6 +253,44 @@ class Object:
                     libtcod.map_set_properties(fov, x1, y1, not cfg.map[x1][y1].block_sight, not cfg.map[x1][y1].blocked)
             
             libtcod.map_compute_fov(fov, self.x, self.y, radius, cfg.FOV_LIGHT_WALLS, cfg.FOV_ALGO)
+            
+        x0 = self.x - radius
+        y0 = self.y - radius
+        
+        #make a list of objects in fov besides self
+        for i in range(2*radius + 1):
+            for j in range(2*radius + 1):
+                if x0 + i in range(cfg.MAP_WIDTH) and y0 + j in range(cfg.MAP_HEIGHT):
+                    obj = cfg.objects_map[x0 + i][y0 + j]
+                    if obj:
+                        if not cfg.XRAY_VISION:
+                            if libtcod.map_is_in_fov(fov, obj.x, obj.y) and obj != self:
+                                #ignore player
+                                if not cfg.IGNORE_PLAYER or obj != cfg.player:
+                                    found.append(obj)
+                                
+                        elif self.distance_to(obj) <= radius and obj != self:
+                            #ignore player
+                            if not cfg.IGNORE_PLAYER or obj != cfg.player:
+                                found.append(obj)
+                
+        return found
+        
+    def old_look_around(self, radius):
+        #return a list of visible objects in a given radius
+        found = []
+                
+        #compute fov
+        if not cfg.XRAY_VISION:
+            #Create a FOV map that has the dimensions of the map
+            fov = libtcod.map_new(cfg.MAP_WIDTH, cfg.MAP_HEIGHT)
+            
+            #Scan the current map each turn and set all the walls as unwalkable
+            for y1 in range(cfg.MAP_HEIGHT):
+                for x1 in range(cfg.MAP_WIDTH):
+                    libtcod.map_set_properties(fov, x1, y1, not cfg.map[x1][y1].block_sight, not cfg.map[x1][y1].blocked)
+            
+            libtcod.map_compute_fov(fov, self.x, self.y, radius, cfg.FOV_LIGHT_WALLS, cfg.FOV_ALGO)
         
         #make a list of objects in fov besides self
         for obj in cfg.objects:
@@ -287,6 +325,10 @@ class Object:
                         if dist < nearest_distance:
                             nearest_obj = obj
                             nearest_distance = dist
+                            
+                            #stop at the first object right next to the fighter
+                            if dist < 2:
+                                break
                             
         return nearest_obj
  
@@ -491,6 +533,7 @@ class Fighter:
 
         elif food in cfg.objects:
             cfg.objects.remove(food)
+            update_objects_map()
             
             
     def take(self, food):
@@ -501,6 +544,7 @@ class Fighter:
             
             #remove food after being picked up
             cfg.objects.remove(food)
+            update_objects_map()
             
     def give(self, friend):
         #gives food to friend
@@ -563,20 +607,22 @@ class Food:
     def grow(self):
         if cfg.map[self.owner.x][self.owner.y].fertile > 0:
             self.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
-            self.owner.color = self.owner.color*1.2
+            self.owner.color = color_mutate(self.owner.color, self.owner.color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)*1.1
             cfg.map[self.owner.x][self.owner.y].leech()
             self.age = 1
     
     #corpses rot over time
     def decompose(self):
-        x = self.owner.x-1
-        y = self.owner.y-1
+        x = self.owner.x
+        y = self.owner.y
         
-        for i in range(3):
-            for j in range(3):
-                cfg.map[x+i][y+j].fertilize()
+        for i in (-1,0,1):
+            for j in (-1,0,1):
+                if x+i in range(cfg.MAP_WIDTH) and y+j in range(cfg.MAP_HEIGHT):
+                    cfg.map[x+i][y+j].fertilize()
 
         cfg.objects.remove(self.owner)
+        update_objects_map()
         
     def age_up(self):
         self.age += 1
@@ -591,8 +637,139 @@ class Food:
  
 class BasicMonster:
     #AI for a basic monster.
+    def __init__(self):
+        self.near_objects = []
+        self.radius = 0
+        self.found_enemy = None
+        self.found_friend = None
+        self.found_food = None
+        
+    @property
+    def enemy(self): #return nearest enemy (member of another species)
+        if self.found_enemy: #already found
+            return self.found_enemy
+        else:
+            self.found_enemy = self.owner.nearest_object(self.radius, self.near_objects, fighter=True, item=False, name='', different=True)
+            return self.found_enemy
+        
+    @property
+    def friend(self): #return nearest friend (member of same species)
+        if self.found_friend: #already found
+            return self.found_friend
+        else:
+            self.found_friend = self.owner.nearest_object(self.radius, self.near_objects, fighter=True, item=False, name=self.owner.name, different=False)
+            return self.found_friend
+        
+    @property
+    def food(self): #return nearest food item not being held
+        if self.found_food: #already found
+            return self.found_food
+        else:
+            self.found_food = self.owner.nearest_object(self.radius, self.near_objects, fighter=False, item=True, name='', different=False)
+            return self.found_food
+        
+    def decide_action(self):
+        #decides what action takes priority
+        monster = self.owner
+        self.radius = monster.fighter.perception
+        self.near_objects = monster.look_around(self.radius)
+        
+        #enemy = monster.nearest_object(self.radius, self.near_objects, fighter=True, item=False, name='', different=True)
+        #friend = monster.nearest_object(self.radius, self.near_objects, fighter=True, item=False, name=monster.name, different=False)
+        #food = monster.nearest_object(self.radius, self.near_objects, fighter=False, item=True, name='', different=False)
+        
+        #food is priority when starving
+        if monster.fighter.starving:
+            if monster.fighter.carry:
+                monster.fighter.eat(monster.fighter.carry)
+            
+            #don't cannibalize if very high social
+            elif self.food and (monster.name not in self.food.name or monster.fighter.social <10):
+                #move toward food if far away
+                if monster.distance_to(self.food) >= 2:
+                    monster.move_astar(self.food)
+ 
+                #close enough, eat
+                else:
+                    monster.fighter.eat(self.food)
+
+            #low social and very high aggro will try to kill and eat each other when starving
+            elif self.friend and (monster.fighter.social <= 4 or monster.fighter.aggro >=10):
+                if monster.distance_to(self.friend) >=2:
+                    monster.move_astar(self.friend)
+                
+                #close enough, attack
+                elif self.friend.fighter.hp > 0:
+                    monster.fighter.attack(self.friend)
+            
+        #fight enemies that are literally right next to you
+        elif self.enemy and (monster.distance_to(self.enemy) < 2 and self.enemy.fighter.hp > 0):
+            monster.fighter.attack(self.enemy)
+        
+        #choose enemy over friend
+        elif self.enemy and self.friend and monster.fighter.aggro >= monster.fighter.social:
+        
+            #if high aggression, move toward enemy
+            if monster.distance_to(self.enemy) >= 2 and not monster.fighter.scared:
+                monster.move_astar(self.enemy)
+
+            #if low aggression, run from enemy
+            else:
+                monster.run_away(self.enemy)
+
+                
+        #only friend, or choose friend over enemy
+        elif self.friend and ((self.friend.fighter.starving and monster.fighter.carry != None) or (self.friend.fighter.cooldown == 0 and cfg.population[monster.name] < cfg.POPULATION_CAP)):
+        
+            #move toward friend if far away
+            if monster.distance_to(self.friend) >= 2:
+                monster.move_astar(self.friend)
+                
+            #close enough, share food
+            elif self.friend.fighter.starving and monster.fighter.carry:
+                monster.fighter.give(self.friend.fighter)
+ 
+            #close enough, mate
+            elif not self.friend.fighter.starving:
+                monster.fighter.reproduce(self.friend.fighter)
+                monster.fighter.cooldown = monster.fighter.max_cooldown
+                self.friend.fighter.cooldown = self.friend.fighter.max_cooldown
+            
+        elif self.enemy:
+ 
+            #if high aggression, move toward enemy
+            if monster.distance_to(self.enemy) >= 2 and not monster.fighter.scared:
+                monster.move_astar(self.enemy)
+
+            #if low aggression, run from enemy
+            else:
+                monster.run_away(self.enemy)
+
+        #get food, does not cannibalize corpses unless starving
+        elif self.food and monster.name not in self.food.name:
+            if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and self.food.corpse):
+        
+                #move toward food if far away
+                if monster.distance_to(self.food) >= 2:
+                    monster.move_astar(self.food)
+ 
+                #close enough, eat
+                elif monster.fighter.carry == None and self.food.corpse:
+                    monster.fighter.take(self.food)
+
+                else:
+                    monster.fighter.eat(self.food)
+                    
+            else:
+                monster.fighter.wander()
+
+        else:
+            #randomly wander otherwise
+            monster.fighter.wander()
+        
+        
     def take_turn(self):
-        #a basic monster takes its turn. sight based on perception
+        #a basic monster takes its turn
         monster = self.owner
         
         #wait until timer is out
@@ -600,100 +777,12 @@ class BasicMonster:
             monster.fighter.wait()
             
         else:
-            radius = monster.fighter.perception
-            near_objects = monster.look_around(radius)
-            enemy = monster.nearest_object(radius, near_objects, fighter=True, item=False, name='', different=True)
-            friend = monster.nearest_object(radius, near_objects, fighter=True, item=False, name=monster.name, different=False)
-            food = monster.nearest_object(radius, near_objects, fighter=False, item=True, name='', different=False)
+            self.decide_action()
             
-            #food is priority when starving
-            if monster.fighter.starving:
-                if monster.fighter.carry:
-                    monster.fighter.eat(monster.fighter.carry)
-                
-                #don't cannibalize if very high social
-                elif food and (monster.name not in food.name or monster.fighter.social <10):
-                    #move toward food if far away
-                    if monster.distance_to(food) >= 2:
-                        monster.move_astar(food)
-     
-                    #close enough, eat
-                    else:
-                        monster.fighter.eat(food)
-
-                #low social and very high aggro will try to kill and eat each other when starving
-                elif friend and (monster.fighter.social <= 4 or monster.fighter.aggro >=10):
-                    if monster.distance_to(friend) >=2:
-                        monster.move_astar(friend)
-                    
-                    #close enough, attack
-                    elif friend.fighter.hp > 0:
-                        monster.fighter.attack(friend)
-                
-			#fight enemies that are literally right next to you
-            elif enemy and (monster.distance_to(enemy) < 2 and enemy.fighter.hp > 0):
-                monster.fighter.attack(enemy)
-			
-            #choose enemy over friend
-            elif enemy and friend and monster.fighter.aggro >= monster.fighter.social:
-            
-                #if high aggression, move toward enemy
-                if monster.distance_to(enemy) >= 2 and not monster.fighter.scared:
-                    monster.move_astar(enemy)
-
-                #if low aggression, run from enemy
-                else:
-                    monster.run_away(enemy)
-
-                    
-            #only friend, or choose friend over enemy
-            elif friend and ((friend.fighter.starving and monster.fighter.carry != None) or (friend.fighter.cooldown == 0 and cfg.population[monster.name] < cfg.POPULATION_CAP)):
-            
-                #move toward friend if far away
-                if monster.distance_to(friend) >= 2:
-                    monster.move_astar(friend)
-                    
-                #close enough, share food
-                elif friend.fighter.starving and monster.fighter.carry:
-                    monster.fighter.give(friend.fighter)
-     
-                #close enough, mate
-                elif not friend.fighter.starving:
-                    monster.fighter.reproduce(friend.fighter)
-                    monster.fighter.cooldown = monster.fighter.max_cooldown
-                    friend.fighter.cooldown = friend.fighter.max_cooldown
-                
-            elif enemy:
-     
-                #if high aggression, move toward enemy
-                if monster.distance_to(enemy) >= 2 and not monster.fighter.scared:
-                    monster.move_astar(enemy)
-
-                #if low aggression, run from enemy
-                else:
-                    monster.run_away(enemy)
-
-            #get food, does not cannibalize corpses unless starving
-            elif food and monster.name not in food.name:
-                if (monster.fighter.nutrition < monster.fighter.max_nutrition/2) or (monster.fighter.carry == None and food.corpse):
-            
-                    #move toward food if far away
-                    if monster.distance_to(food) >= 2:
-                        monster.move_astar(food)
-     
-                    #close enough, eat
-                    elif monster.fighter.carry == None and food.corpse:
-                        monster.fighter.take(food)
-
-                    else:
-                        monster.fighter.eat(food)
-                        
-                else:
-                    monster.fighter.wander()
-
-            else:
-                #randomly wander otherwise
-                monster.fighter.wander()
+            #reset found objects
+            self.found_enemy = None
+            self.found_friend = None
+            self.found_food = None
                 
             #cooldown
             if monster.fighter.cooldown > 0:
@@ -733,6 +822,7 @@ class Item:
         else:
             cfg.inventory.append(self.owner)
             cfg.objects.remove(self.owner)
+            update_objects_map()
             gui.message('You picked up a ' + self.owner.name + '!', libtcod.green)
  
             #special case: automatically equip, if the corresponding equipment slot is unused
@@ -1037,10 +1127,11 @@ def monster_death(monster):
         gui.message(monster.name.capitalize() + ' is dead! HP:' + str(monster.fighter.max_hp) + ' DEF:' + str(monster.fighter.defense) + ' POW:' + str(monster.fighter.power) + ' SPD:' + str(monster.fighter.speed) + ' PER:' + str(monster.fighter.perception) + ' XP:' + str(monster.fighter.xp) + ' NUT:' + str(monster.fighter.max_nutrition), libtcod.light_red)
     else:
         gui.message(monster.name.capitalize() + ' is dead!', libtcod.light_red)
-    
+        
+    corpse_nutrition = max(monster.fighter.nutrition, int(monster.fighter.max_nutrition * cfg.CORPSE_MIN_NUTRITION))
     monster.char = '%'
     monster.color = monster.color * 0.7
-    monster.item = Food(monster.fighter.nutrition)
+    monster.item = Food(corpse_nutrition)
     monster.item.owner = monster.fighter.owner
     monster.blocks = False
     monster.fighter = None
@@ -1109,6 +1200,19 @@ def object_count(name):
             count += 1
             
     return count
+    
+def update_objects_map():
+    #makes a list of objects based on their map position
+    #initialize an empty list
+    cfg.objects_map = [[ None
+             for y in range(cfg.MAP_HEIGHT) ]
+           for x in range(cfg.MAP_WIDTH) ]
+           
+    for obj in cfg.objects:
+        #if two objects have the same position,
+        #whichever is later in the list takes precedence,
+        #which corresponds to the object drawn with the gui
+        cfg.objects_map[obj.x][obj.y] = obj
     
 def initialize_population():
     #adds the names and populations of the monsters currently generated to the population dictionaries
