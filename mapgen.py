@@ -38,9 +38,11 @@ class Tile:
                 #update map
                 cfg.fov_recompute = True
                 
-    def leech(self):
+    def leech(self, fp=1):
         #reduce fertility level
-        self.fertile -= 1
+        self.fertile -= fp
+        if self.fertile < 0:
+            self.fertile = 0
     
     def fertilize(self):
         #increase fertility level
