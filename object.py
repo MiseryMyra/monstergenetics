@@ -618,7 +618,8 @@ class Food:
         
         for i in (-1,0,1):
             for j in (-1,0,1):
-                cfg.map[x+i][y+j].fertilize()
+                if x+i in range(cfg.MAP_WIDTH) and y+j in range(cfg.MAP_HEIGHT):
+                    cfg.map[x+i][y+j].fertilize()
 
         cfg.objects.remove(self.owner)
         update_objects_map()
