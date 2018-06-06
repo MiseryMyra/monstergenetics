@@ -16,6 +16,10 @@ def handle_keys():
  
     elif cfg.key.vk == libtcod.KEY_ESCAPE or libtcod.console_is_window_closed():
         return 'exit'  #exit game
+        
+    elif cfg.key.vk == libtcod.KEY_F12:
+            #take a screenshot
+            libtcod.sys_save_screenshot('a')
  
     if cfg.game_state == 'playing':
         #movement keys
@@ -171,6 +175,7 @@ def new_game():
  
 def play_game():
     player_action = None
+    fps = 0
  
     #main loop
     while not libtcod.console_is_window_closed():
@@ -225,6 +230,14 @@ def play_game():
             #update population counts
             #update_population()
             object.update_max_population()
+            
+            #print fps
+            if cfg.PRINT_FPS:
+                new_fps = libtcod.sys_get_fps()
+                #only print when it changes
+                if new_fps != fps:
+                    fps = new_fps
+                    print 'FPS: ' + str(fps)
  
 def main_menu():
     libtcod.console_set_custom_font('terminal8x12_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
