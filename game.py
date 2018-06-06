@@ -222,8 +222,8 @@ def play_game():
                     if not occupant:
                         object.make_plant(x, y)
                     
-                    elif type(occupant) is not bool:
-                        if occupant.name == 'plant':
+                    elif type(occupant) is object.Food:
+                        if not occupant.corpse:
                             occupant.item.grow()
 
                 

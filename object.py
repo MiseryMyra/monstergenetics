@@ -3,6 +3,7 @@ import math
 import random
 import cfg
 import monst
+import plnt
 import gui
 
 #module for object classes and related functions
@@ -607,7 +608,7 @@ class Food:
     #plants grow over time
     def grow(self):
         if cfg.map[self.owner.x][self.owner.y].fertile > 0:
-            self.increase_nutrition(cfg.BASE_PLANT_NUTRITION)
+            self.increase_nutrition(plnt.properties[self.owner.name].nutrition)
             self.owner.color = color_mutate(self.owner.color, self.owner.color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)*1.1
             cfg.map[self.owner.x][self.owner.y].leech()
             self.age = 1
@@ -1077,7 +1078,7 @@ def player_move_or_attack(dx, dy):
     #try to find an attackable object there
     target = None
     for obj in cfg.objects:
-        if obj.fighter and obj.name != 'plant' and obj.x == x and obj.y == y:
+        if obj.fighter and obj.x == x and obj.y == y:
             target = obj
             break
  
@@ -1219,7 +1220,7 @@ def initialize_population():
     #adds the names and populations of the monsters currently generated to the population dictionaries
     for obj in cfg.objects:
         if obj.fighter and obj.name not in cfg.max_population:
-            if obj.name is not 'player' and obj.name is not 'plant':
+            if obj.name is not 'player':
                 cfg.population[obj.name] = object_count(obj.name)
                 cfg.max_population[obj.name] = object_count(obj.name)
     
@@ -1266,13 +1267,41 @@ def make_monster(x, y, name, properties):
 def make_plant(x, y):
     if cfg.map[x][y].fertile > 0:
         #makes a plant at a given position
-        character = cfg.PLANT_CHAR
-        color = libtcod.desaturated_green
-        color = color_mutate(color, color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
+        #choose which plant
+        plant_chances = {}
+        for name in plnt.properties:
+            if plnt.properties[name].fp <= cfg.map[x][y].fertile:
+                plant_chances[name] = plnt.properties[name].chances
+                choice = random_choice(plant_chances) #name
+        properties = plnt.properties[choice]
+        character = properties.char
+        color = color_mutate(properties.color, properties.color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
     
-        nutri_component = mutate(cfg.BASE_PLANT_NUTRITION, 0.5, 0.2)
+        nutri_component = int(mutate(properties.nutrition, 0.5, 0.2))
         item_component = Food(nutri_component)
-        plant = Object(x, y, character, 'plant', color, blocks=False, corpse=False, item=item_component)
+        plant = Object(x, y, character, choice, color, blocks=False, corpse=False, item=item_component)
         cfg.objects.append(plant)
-        cfg.map[x][y].leech()
+        cfg.map[x][y].leech(fp=properties.fp)
         plant.send_to_back()
+
+def random_choice_index(chances):  #choose one option from list of chances, returning its index
+    #the dice will land on some number between 1 and the sum of the chances
+    dice = libtcod.random_get_int(0, 1, sum(chances))
+ 
+    #go through all chances, keeping the sum so far
+    running_sum = 0
+    choice = 0
+    for w in chances:
+        running_sum += w
+ 
+        #see if the dice landed in the part that corresponds to this choice
+        if dice <= running_sum:
+            return choice
+        choice += 1
+ 
+def random_choice(chances_dict):
+    #choose one option from dictionary of chances, returning its key
+    chances = chances_dict.values()
+    strings = chances_dict.keys()
+ 
+    return strings[random_choice_index(chances)]
