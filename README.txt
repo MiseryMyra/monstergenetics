@@ -1,7 +1,7 @@
 =============================
-|  MONSTER GENETICS 0.3.1   |
+|  MONSTER GENETICS 0.3.2   |
 |       By MiseryMyra       |
-| Last revision: 06/04/2018 |
+| Last revision: 06/05/2018 |
 =============================
 
 -------------
