@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 
 #module used for configuring settings and initializing globals
 
-VERSION_NUMBER = '0.3.1'
+VERSION_NUMBER = '0.3.2'
 
 ALL_SEEING = True #displays full map
 IGNORE_PLAYER = True #monsters don't target player
@@ -10,7 +10,9 @@ XRAY_VISION = True #monsters see through walls
 REAL_TIME = True #runs in real time instead of with turns, toggled with r key
 CHEBYSHEV_METRIC = False #counts diagonals as a distance of 1 instead of sqrt(2)
 DEATH_STATS = False #displays stats of monster upon death
+REPRODUCTION_FAILURE = False #displays failed attempts at reproduction
 MAKE_STAIRS = False #makes stairs to subsequent levels
+PRINT_FPS = False #prints fps to console
  
 #actual size of the window
 SCREEN_WIDTH = 90
@@ -57,6 +59,7 @@ MAX_TIMER = 24 #highly composite number for uniformity in action at most speeds
 COOLDOWN_FACTOR = 1
 MIN_COOLDOWN = 120
 POPULATION_CAP = 100
+OVERPOPULATION_PERCENT = 0.5 #percent of max population considered overpopulated
 WANDER_ATTEMPTS = 5
 START_NUTRITION = 0.5 #percentage of starting nutrition
 CORPSE_MIN_NUTRITION = 0.3 #least percentage of max nutrition that remains in corpse after death
@@ -66,7 +69,7 @@ MAX_AGGRO = 20 #maximum aggro for scared calculation
 CRIT_DIE = 20 #sides of a die used to roll against for crits
 
 #mutations
-REPRODUCTION_ATTEMPTS = 3
+REPRODUCTION_ATTEMPTS = 5
 MUTATE_PROBABILITY = 1.0
 MUTATE_FACTOR = 0.2
 COLOR_MUTATE = 0.07
