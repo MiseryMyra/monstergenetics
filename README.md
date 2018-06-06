@@ -38,6 +38,9 @@ Module for defining the initial properties for all the different monsters
 **object.py**:
 Module for object classes and related functions
 
+**plnt.py**:
+Module for defining the initial properties for all the different plant types
+
 **run_py2exe.py**:
 Generates binary with py2exe
 
