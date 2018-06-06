@@ -1,5 +1,11 @@
 Monster Genetics Changelog
 
+Version 0.3.2:
+- Added multiple kinds of plants with different properties
+- Added overpopulation: reproduction rates decrease as the population approaches the population cap
+- Failed reproduction attempts are no longer displayed
+- Fixed a crash caused by corpses decaying at the edge of the map
+
 Version 0.3.1:
 - Land can now be green and fertile, allowing plant growth
 - Plants now grow over time, becoming more nutritious at the cost of land fertility
