@@ -560,8 +560,8 @@ class Fighter:
         monster = self.owner
         location = random_nearby_tile(monster.x, monster.y, cfg.REPRODUCTION_ATTEMPTS)
         
-        #more likely to fail if in a cramped area
-        if location:
+        #more likely to fail if in a cramped area or overpopulated
+        if location and random.random() >= overpopulation_modifier(monster.name):
             (x, y) = location
             #calculate average between partners, then mutate
             hp = mutate((self.max_hp + mate.max_hp)/2, cfg.MUTATE_PROBABILITY, cfg.MUTATE_FACTOR)
@@ -588,7 +588,8 @@ class Fighter:
             gui.message(self.owner.name.capitalize() + ' reproduced!', libtcod.light_green)
             
         else:
-            gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.7)
+            if cfg.REPRODUCTION_FAILURE:
+                gui.message(self.owner.name.capitalize() + ' tried to reproduce, but failed.', libtcod.light_green * 0.7)
 
 
 class Food:
@@ -1239,6 +1240,14 @@ def update_population(name=None):
     else:
         for key in cfg.population:
             cfg.population[key] = object_count(key)
+            
+def overpopulation_modifier(name):
+    #returns a value from 0 to 1 based on how overpopulated a species is
+    pop = cfg.population[name]
+    overpop = cfg.POPULATION_CAP * cfg.OVERPOPULATION_PERCENT
+    modifier = (pop - overpop - 1) / (cfg.POPULATION_CAP - overpop)
+    
+    return max(modifier, 0)
             
 def make_monster(x, y, name, properties):
     #makes a fighter at a given position with a given name
