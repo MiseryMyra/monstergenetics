@@ -333,22 +333,22 @@ def msgbox(text, width=50):
     menu(text, [], width)  #use menu() as a sort of "message box"
     
 def display_monster_stats():
-    message = 'Monster Statistics'
+    message = 'MONSTER STATISTICS'
     #stats in the official order
     stats_list = ['hp', 'pw', 'df', 'dx', 'sp', 'pr', 'lk', 'xp', 'nt', 'sc', 'ag']
     for name in list_monsters():
         if cfg.population[name] > 0:
             stats = total_monster_stats(name)
-            avg_string = name.capitalize() + ' (avg): '
-            max_string = name.capitalize() + ' (max): '
-            min_string = name.capitalize() + ' (min): '
+            avg_string = 'avg: '
+            max_string = 'max: '
+            min_string = 'min: '
 
             for stat in stats_list:
                 avg_string = avg_string + stat.upper() + ':' + str(stats[stat]['avg']) + ' '
                 max_string = max_string + stat.upper() + ':' + str(stats[stat]['max']) + ' '
                 min_string = min_string + stat.upper() + ':' + str(stats[stat]['min']) + ' '
 
-            stats_string = '\n\n' + avg_string + '\n' + max_string + '\n' + min_string
+            stats_string = '\n\n' + name.capitalize() + '\n' + avg_string + '\n' + max_string + '\n' + min_string
             message = message + stats_string
     
     msgbox(message,86)
@@ -428,7 +428,7 @@ def display_description():
     for i in range(len(capitalized_names)):
         capitalized_names[i] = names[i].capitalize()
 
-    choice = menu('Describe which species?\nPress any other key to cancel.', capitalized_names, 36, numbers=True)
+    choice = menu('Describe which species?\nPress any other key to cancel.\n', capitalized_names, 36, numbers=True)
 
     if choice is not None:
         name = names[choice]
