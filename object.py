@@ -1275,7 +1275,7 @@ def make_plant(x, y):
                 choice = random_choice(plant_chances) #name
         properties = plnt.properties[choice]
         character = properties.char
-        color = color_mutate(properties.color, properties.color, cfg.MUTATE_PROBABILITY, cfg.COLOR_MUTATE)
+        color = color_mutate(properties.color, properties.color, cfg.MUTATE_PROBABILITY, cfg.PLANT_COLOR_MUTATE)
     
         nutri_component = int(mutate(properties.nutrition, 0.5, 0.2))
         item_component = Food(nutri_component)
