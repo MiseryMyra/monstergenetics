@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import sys
 import shelve
 import cfg
 import object
@@ -174,6 +175,7 @@ def new_game():
     #obj.always_visible = True
  
 def play_game():
+    sys.setrecursionlimit(10000) #to ensure saving works
     player_action = None
     fps = 0
  
