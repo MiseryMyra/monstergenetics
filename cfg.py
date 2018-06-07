@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 
 #module used for configuring settings and initializing globals
 
-VERSION_NUMBER = '0.3.2'
+VERSION_NUMBER = '0.3.3'
 
 ALL_SEEING = True #displays full map
 IGNORE_PLAYER = True #monsters don't target player
@@ -12,7 +12,7 @@ CHEBYSHEV_METRIC = False #counts diagonals as a distance of 1 instead of sqrt(2)
 DEATH_STATS = False #displays stats of monster upon death
 REPRODUCTION_FAILURE = False #displays failed attempts at reproduction
 MAKE_STAIRS = False #makes stairs to subsequent levels
-PRINT_FPS = False #prints fps to console
+PRINT_FPS = True #prints fps to console
  
 #actual size of the window
 SCREEN_WIDTH = 90
@@ -73,15 +73,16 @@ REPRODUCTION_ATTEMPTS = 5
 MUTATE_PROBABILITY = 1.0
 MUTATE_FACTOR = 0.2
 COLOR_MUTATE = 0.07
+PLANT_COLOR_MUTATE = 0.04
 
 #resource properties
 MAX_STARTING_PLANTS = 3 #maximum number of plants to initially sprout per room
-BASE_PLANT_NUTRITION = 20
+BASE_PLANT_NUTRITION = 50
 PLANT_GROWTH_RATE = 500 #how many turns it takes for a plant to grow larger
-PLANT_GROWTH_PROBABILITY = 0.3 #probability that plants will sprout in a turn
+PLANT_GROWTH_PROBABILITY = 0.1 #probability that plants will sprout in a turn
 NEW_PLANT_RATE = 2 #number of new plants that will sprout
 PLANT_CHAR = '\"'
-LAND_FERTILITY = 1 #how fertile the land is by default
+LAND_FERTILITY = 3 #how fertile the land is by default
 DECOMPOSITION_RATE = 500 #how many turns it takes before a corpse decomposes
  
 #experience and level-ups
