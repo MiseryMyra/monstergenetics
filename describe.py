@@ -211,6 +211,48 @@ def des_pop(pop):
         return 'is critically endangered'
     else:
         return 'is the last of its kind'
+        
+def des_sc(sc):
+    #returns a descriptor for a monster's social stat
+    if sc >= 20:
+        return 'forms a complex social structure with other members of its own species built on teamwork and mutual care'
+    elif sc >= 15:
+        return 'prefers to live in large groups with many other members of its own species'
+    elif sc >= 12:
+        return 'forms communities within its own species'
+    elif sc >= 10:
+        return 'seems to take care of other members of its own species'
+    elif sc >= 8:
+        return 'is a somewhat social species'
+    elif sc >= 6:
+        return 'has limited interactions with other members of its own species'
+    elif sc >= 4:
+        return 'mostly ignores other members of its own species'
+    elif sc >= 2:
+        return 'does not enjoy being with members of its own species'
+    else:
+        return 'prefers to live in solitude'
+        
+def des_ag(ag):
+    #returns a descriptor for a monster's aggression
+    if ag >= 20:
+        return 'lives an enraged life full of fury and conflict until the bitter end'
+    elif ag >= 15:
+        return 'is extremely hostile and attacks at a moment\'s notice'
+    elif ag >= 12:
+        return 'is antagonistic toward most living things'
+    elif ag >= 10:
+        return 'is quite aggressive, even with members of its own species'
+    elif ag >= 7:
+        return 'is somewhat aggressive, but only toward other species'
+    elif ag >= 5:
+        return 'seems calm, but it fights if it must'
+    elif ag >= 3:
+        return 'is a somewhat meek creature that tries not to fight'
+    elif ag >= 1:
+        return 'is a very docile animal'
+    else:
+        return 'avoids conflict at all costs'
 
 def des_name(name):
     #returns a semi-random descriptor based on a monster's name
@@ -225,7 +267,7 @@ def generate_description(name, pop, stats):
 
     #extinct creature
     if pop < 1:
-        description = 'The ' + name + ' is an extinct creature. Its appearance and lifestyle are a mystery that has been lost to time.'
+        description = 'The ' + name + ' is an extinct creature which, according to legend, was notable for ' + des_name(name) + '. Otherwise, its appearance and lifestyle are a mystery that has been lost to time.'
     
     else:
         #stats = total_monster_stats(name)
@@ -236,8 +278,10 @@ def generate_description(name, pop, stats):
         sp = stats['sp']['avg']
         pr = stats['pr']['avg']
         hp = stats['hp']['avg']
+        sc = stats['sc']['avg']
+        ag = stats['ag']['avg']
         
-        description = 'The ' + name + ' is ' + des_xp(xp) + '. Its body ' + des_df(df) + ', and it attacks ' + des_pw(pw) + '. It moves by ' + des_dx(dx) + ' ' + des_sp(sp) + ', and it senses ' + des_pr(pr) + '. Its most distinctive feature is ' + des_name(name) + '. It ' + des_hp(hp) + ', and it ' + des_pop(pop) + '.'
+        description = 'The ' + name + ' is ' + des_xp(xp) + '. Its body ' + des_df(df) + ', and it attacks ' + des_pw(pw) + '. It moves by ' + des_dx(dx) + ' ' + des_sp(sp) + ', and it senses ' + des_pr(pr) + '. Its most distinctive feature is ' + des_name(name) + '. It ' + des_hp(hp) + ', and it ' + des_pop(pop) + '.\n\nBehaviorally, the ' + name + ' ' + des_sc(sc) + ', and it ' + des_ag(ag) + '.'
 
     description = description + '\n\nPress any key to exit.'
 
